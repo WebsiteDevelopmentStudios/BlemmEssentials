@@ -42,7 +42,7 @@ public final class CommandPolicy {
 
     public static synchronized boolean disabled(CommandSourceStack source, String command) {
         if (source.getEntity() == null) return false;
-        String dimension = source.getLevel().dimension().location().toString().toLowerCase(Locale.ROOT).replace(':', '_');
+        String dimension = source.getLevel().dimension().identifier().toString().toLowerCase(Locale.ROOT).replace(':', '_');
         String target = command.toLowerCase(Locale.ROOT);
         return contains(CONFIG.getProperty("*", ""), target)
             || contains(CONFIG.getProperty(dimension, ""), target)
