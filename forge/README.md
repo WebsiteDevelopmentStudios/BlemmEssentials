@@ -16,7 +16,7 @@ Native Forge server mod targeting Minecraft 26.3 and Java 25.
 
 Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
-The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, rank chat/tab prefixes, or custom item metadata in auction listings.
+The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, or custom item metadata in auction listings.
 
 Build with Java 25: `gradle -p forge build`.
 
