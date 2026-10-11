@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "blemmessentials",
+  "version": "${version}",
+  "name": "BlemmEssentials",
+  "description": "Economy and server essentials for Fabric servers.",
+  "authors": ["WebsiteDevelopmentStudios"],
+  "license": "All-Rights-Reserved",
+  "environment": "server",
+  "entrypoints": {
+    "main": ["dev.blemm.essentials.fabric.BlemmEssentialsFabric"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
