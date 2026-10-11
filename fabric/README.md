@@ -16,7 +16,7 @@ Native Fabric server mod targeting Minecraft 26.3 and Java 25.
 
 Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
-The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, or full item stack metadata in auction listings.
+The Fabric port uses native vanilla GUIs and has optional integrations for MiniPlaceholders and Geyser/Floodgate skin lookups. It is not a Bukkit plugin and cannot load DiscordSRV, PlaceholderAPI, or Multiverse-Core directly.
 
 Build with Java 25: `gradle -p fabric build`.
 
