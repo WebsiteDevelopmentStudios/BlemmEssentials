@@ -1,0 +1,245 @@
+package dev.blemm.essentials.locations;
+
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+
+public final class LocationCommands {
+    private static final Properties DATA = new Properties();
+    private static final Map<UUID, Request> REQUESTS = new HashMap<>();
+    private static Path dataFile;
+
+    private LocationCommands() {}
+
+    public static synchronized void load(MinecraftServer server) {
+        dataFile = server.getServerDirectory().resolve("blemmessentials").resolve("locations.properties");
+        DATA.clear();
+        if (!Files.exists(dataFile)) return;
+        try (InputStream input = Files.newInputStream(dataFile)) {
+            DATA.load(input);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not load BlemmEssentials locations", exception);
+        }
+    }
+
+    public static synchronized void save(MinecraftServer server) {
+        Path destination = dataFile != null ? dataFile : server.getServerDirectory().resolve("blemmessentials").resolve("locations.properties");
+        try {
+            Files.createDirectories(destination.getParent());
+            try (OutputStream output = Files.newOutputStream(destination)) {
+                DATA.store(output, "BlemmEssentials homes, warps, and lobby");
+            }
+            dataFile = destination;
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not save BlemmEssentials locations", exception);
+        }
+    }
+
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("sethome")
+            .executes(context -> setHome(context.getSource().getPlayerOrException(), "home", context.getSource().getServer()))
+            .then(Commands.argument("name", StringArgumentType.word()).executes(context ->
+                setHome(context.getSource().getPlayerOrException(), StringArgumentType.getString(context, "name"), context.getSource().getServer()))));
+
+        dispatcher.register(Commands.literal("home")
+            .executes(context -> goHome(context.getSource().getPlayerOrException(), "home", context.getSource().getServer()))
+            .then(Commands.argument("name", StringArgumentType.word()).executes(context ->
+                goHome(context.getSource().getPlayerOrException(), StringArgumentType.getString(context, "name"), context.getSource().getServer()))));
+
+        dispatcher.register(Commands.literal("delhome")
+            .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                String key = homeKey(player.getUUID(), StringArgumentType.getString(context, "name"));
+                synchronized (LocationCommands.class) {
+                    if (DATA.remove(key) == null) {
+                        context.getSource().sendFailure(Component.literal("That home does not exist."));
+                        return 0;
+                    }
+                    save(context.getSource().getServer());
+                }
+                context.getSource().sendSuccess(() -> Component.literal("Home deleted."), false);
+                return 1;
+            })));
+
+        dispatcher.register(Commands.literal("setwarp").requires(LocationCommands::isOperator)
+            .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                String name = StringArgumentType.getString(context, "name").toLowerCase(java.util.Locale.ROOT);
+                synchronized (LocationCommands.class) {
+                    DATA.setProperty("warp." + name, encode(player));
+                    save(context.getSource().getServer());
+                }
+                context.getSource().sendSuccess(() -> Component.literal("Warp '" + name + "' saved."), true);
+                return 1;
+            })));
+
+        dispatcher.register(Commands.literal("warp")
+            .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
+                String name = StringArgumentType.getString(context, "name").toLowerCase(java.util.Locale.ROOT);
+                String encoded;
+                synchronized (LocationCommands.class) { encoded = DATA.getProperty("warp." + name); }
+                return teleport(context.getSource(), encoded, "Warp not found.");
+            })));
+
+        dispatcher.register(Commands.literal("delwarp").requires(LocationCommands::isOperator)
+            .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
+                String name = StringArgumentType.getString(context, "name").toLowerCase(java.util.Locale.ROOT);
+                synchronized (LocationCommands.class) {
+                    if (DATA.remove("warp." + name) == null) {
+                        context.getSource().sendFailure(Component.literal("Warp not found."));
+                        return 0;
+                    }
+                    save(context.getSource().getServer());
+                }
+                context.getSource().sendSuccess(() -> Component.literal("Warp deleted."), true);
+                return 1;
+            })));
+
+        dispatcher.register(Commands.literal("setlobby").requires(LocationCommands::isOperator).executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            synchronized (LocationCommands.class) {
+                DATA.setProperty("lobby", encode(player));
+                save(context.getSource().getServer());
+            }
+            context.getSource().sendSuccess(() -> Component.literal("Lobby location saved."), true);
+            return 1;
+        }));
+
+        dispatcher.register(Commands.literal("lobby").executes(context -> {
+            String encoded;
+            synchronized (LocationCommands.class) { encoded = DATA.getProperty("lobby"); }
+            return teleport(context.getSource(), encoded, "Lobby location has not been set.");
+        }));
+
+        dispatcher.register(Commands.literal("tpa")
+            .then(Commands.argument("player", EntityArgument.player()).executes(context ->
+                requestTeleport(context.getSource().getPlayerOrException(), EntityArgument.getPlayer(context, "player"), false, context.getSource()))));
+
+        dispatcher.register(Commands.literal("tpahere")
+            .then(Commands.argument("player", EntityArgument.player()).executes(context ->
+                requestTeleport(context.getSource().getPlayerOrException(), EntityArgument.getPlayer(context, "player"), true, context.getSource()))));
+
+        dispatcher.register(Commands.literal("tpaccept").executes(context -> respond(context.getSource().getPlayerOrException(), true, context.getSource())));
+        dispatcher.register(Commands.literal("tpdeny").executes(context -> respond(context.getSource().getPlayerOrException(), false, context.getSource())));
+    }
+
+    private static boolean isOperator(CommandSourceStack source) {
+        if (source.getEntity() == null) return true;
+        return source.getEntity() instanceof ServerPlayer player
+            && source.getServer().getPlayerList().isOp(player.nameAndId());
+    }
+
+    private static int setHome(ServerPlayer player, String name, MinecraftServer server) {
+        synchronized (LocationCommands.class) {
+            DATA.setProperty(homeKey(player.getUUID(), name), encode(player));
+            save(server);
+        }
+        player.sendSystemMessage(Component.literal("Home '" + name + "' saved."));
+        return 1;
+    }
+
+    private static int goHome(ServerPlayer player, String name, MinecraftServer server) {
+        String encoded;
+        synchronized (LocationCommands.class) { encoded = DATA.getProperty(homeKey(player.getUUID(), name)); }
+        return teleport(player.createCommandSourceStack(), encoded, "Home not found.");
+    }
+
+    private static String homeKey(UUID uuid, String name) {
+        return "home." + uuid + "." + name.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private static String encode(ServerPlayer player) {
+        return player.level().dimension().location() + ";"
+            + player.getX() + ";" + player.getY() + ";" + player.getZ() + ";"
+            + player.getYRot() + ";" + player.getXRot();
+    }
+
+    private static int teleport(CommandSourceStack source, String encoded, String missingMessage) {
+        if (encoded == null || encoded.isBlank()) {
+            source.sendFailure(Component.literal(missingMessage));
+            return 0;
+        }
+        try {
+            String[] fields = encoded.split(";", -1);
+            if (fields.length != 6) throw new IllegalArgumentException("Invalid saved location");
+            ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(fields[0]));
+            ServerLevel level = source.getServer().getLevel(dimension);
+            if (level == null) {
+                source.sendFailure(Component.literal("That location's world is not loaded."));
+                return 0;
+            }
+            double x = Double.parseDouble(fields[1]);
+            double y = Double.parseDouble(fields[2]);
+            double z = Double.parseDouble(fields[3]);
+            float yaw = Float.parseFloat(fields[4]);
+            float pitch = Float.parseFloat(fields[5]);
+            ServerPlayer player = source.getPlayerOrException();
+            player.teleportTo(level, x, y, z, Set.of(), yaw, pitch);
+            player.sendSystemMessage(Component.literal("Teleported."));
+            return 1;
+        } catch (RuntimeException exception) {
+            source.sendFailure(Component.literal("That saved location is invalid."));
+            return 0;
+        }
+    }
+
+    private static int requestTeleport(ServerPlayer sender, ServerPlayer target, boolean here, CommandSourceStack source) {
+        if (sender.getUUID().equals(target.getUUID())) {
+            source.sendFailure(Component.literal("You cannot request a teleport to yourself."));
+            return 0;
+        }
+        REQUESTS.put(target.getUUID(), new Request(sender.getUUID(), here, System.currentTimeMillis() + 60_000L));
+        target.sendSystemMessage(Component.literal(sender.getGameProfile().name()
+            + (here ? " asks you to teleport to them." : " wants to teleport to you.")
+            + " Use /tpaccept or /tpdeny within 60 seconds."));
+        sender.sendSystemMessage(Component.literal("Teleport request sent to " + target.getGameProfile().name() + "."));
+        return 1;
+    }
+
+    private static int respond(ServerPlayer target, boolean accept, CommandSourceStack source) {
+        Request request = REQUESTS.remove(target.getUUID());
+        if (request == null || request.expiresAt() < System.currentTimeMillis()) {
+            source.sendFailure(Component.literal("You have no active teleport requests."));
+            return 0;
+        }
+        ServerPlayer requester = source.getServer().getPlayerList().getPlayer(request.requester());
+        if (requester == null) {
+            source.sendFailure(Component.literal("That player is no longer online."));
+            return 0;
+        }
+        if (!accept) {
+            requester.sendSystemMessage(Component.literal(target.getGameProfile().name() + " denied your teleport request."));
+            target.sendSystemMessage(Component.literal("Teleport request denied."));
+            return 1;
+        }
+        ServerPlayer moving = request.teleportHere() ? requester : target;
+        ServerPlayer destination = request.teleportHere() ? target : requester;
+        moving.teleportTo(destination.serverLevel(), destination.getX(), destination.getY(), destination.getZ(),
+            Set.of(), destination.getYRot(), destination.getXRot());
+        moving.sendSystemMessage(Component.literal("Teleport request accepted."));
+        return 1;
+    }
+
+    private record Request(UUID requester, boolean teleportHere, long expiresAt) {}
+}
