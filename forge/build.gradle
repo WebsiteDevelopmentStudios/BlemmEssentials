@@ -13,7 +13,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 minecraft {
     runs {
         configureEach {
-            workingDirectory = layout.projectDirectory.dir('run')
+            workingDir = layout.projectDirectory.dir('run')
             systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
         }
         register('server') { args '--nogui' }
