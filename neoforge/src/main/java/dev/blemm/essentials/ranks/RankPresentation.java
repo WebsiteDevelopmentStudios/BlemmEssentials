@@ -12,7 +12,7 @@ public final class RankPresentation {
     private RankPresentation() {}
 
     public static void apply(ServerPlayer player) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.serverLevel().getServer();
         if (server == null) return;
         Scoreboard scoreboard = server.getScoreboard();
         String rank = RankStore.get(player.getUUID());
