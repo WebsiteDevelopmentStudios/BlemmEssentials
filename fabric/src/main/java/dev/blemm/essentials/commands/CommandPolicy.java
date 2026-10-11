@@ -26,7 +26,7 @@ public final class CommandPolicy {
             try (InputStream in = Files.newInputStream(file)) { CONFIG.load(in); }
             catch (IOException e) { throw new IllegalStateException("Could not load BlemmEssentials command policy", e); }
         } else {
-            CONFIG.setProperty("minecraft:the_end", "");
+            CONFIG.setProperty("minecraft_the_end", "");
             save();
         }
     }
@@ -35,14 +35,14 @@ public final class CommandPolicy {
         try {
             Files.createDirectories(file.getParent());
             try (OutputStream out = Files.newOutputStream(file)) {
-                CONFIG.store(out, "Disable command names per dimension ID, e.g. minecraft:the_end=rtp,home,sethome. Use *=... for every dimension.");
+                CONFIG.store(out, "Disable command names per dimension ID, replacing ":" with "_", e.g. minecraft_the_end=rtp,home,sethome. Use *=... for every dimension.");
             }
         } catch (IOException e) { throw new IllegalStateException("Could not save BlemmEssentials command policy", e); }
     }
 
     public static synchronized boolean disabled(CommandSourceStack source, String command) {
         if (source.getEntity() == null) return false;
-        String dimension = source.getLevel().dimension().location().toString().toLowerCase(Locale.ROOT);
+        String dimension = source.getLevel().dimension().location().toString().toLowerCase(Locale.ROOT).replace(':', '_');
         String target = command.toLowerCase(Locale.ROOT);
         return contains(CONFIG.getProperty("*", ""), target)
             || contains(CONFIG.getProperty(dimension, ""), target)
