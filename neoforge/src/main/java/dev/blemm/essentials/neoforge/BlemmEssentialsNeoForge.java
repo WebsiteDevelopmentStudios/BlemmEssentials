@@ -33,7 +33,12 @@ public final class BlemmEssentialsNeoForge {
     public BlemmEssentialsNeoForge(IEventBus modEventBus) {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
-            if (event.getEntity() instanceof ServerPlayer player) dev.blemm.essentials.ranks.RankPresentation.apply(player);
+            if (event.getEntity() instanceof ServerPlayer player) { dev.blemm.essentials.ranks.RankPresentation.apply(player); dev.blemm.essentials.menu.CompassMenu.onJoin(player); }
+        });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem event) -> {
+            if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
+            if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
+            dev.blemm.essentials.menu.CompassMenu.open(player);
         });
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); dev.blemm.essentials.shop.ShopPrices.load(event.getServer()); dev.blemm.essentials.integrations.DiscordWebhook.load(event.getServer()); dev.blemm.essentials.commands.CommandPolicy.load(event.getServer()); });
         NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); FriendStore.save(event.getServer()); });

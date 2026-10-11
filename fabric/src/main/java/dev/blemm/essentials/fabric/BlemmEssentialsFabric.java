@@ -7,6 +7,9 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
@@ -32,7 +35,14 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> dev.blemm.essentials.ranks.RankPresentation.apply(handler.player));
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> { dev.blemm.essentials.ranks.RankPresentation.apply(handler.player); dev.blemm.essentials.menu.CompassMenu.onJoin(handler.player); });
+        UseItemCallback.EVENT.register((player, level, hand) -> {
+            if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
+            ItemStack held = player.getItemInHand(hand);
+            if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(held)) return InteractionResult.PASS;
+            dev.blemm.essentials.menu.CompassMenu.open(serverPlayer);
+            return InteractionResult.SUCCESS;
+        });
         ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); dev.blemm.essentials.commands.CommandPolicy.load(server); });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 

@@ -12,6 +12,7 @@ import dev.blemm.essentials.ranks.RankStore;
 import dev.blemm.essentials.friends.FriendStore;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -37,7 +38,14 @@ public final class BlemmEssentialsForge {
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) dev.blemm.essentials.ranks.RankPresentation.apply(player);
+        if (event.getEntity() instanceof ServerPlayer player) { dev.blemm.essentials.ranks.RankPresentation.apply(player); dev.blemm.essentials.menu.CompassMenu.onJoin(player); }
+    }
+
+    @SubscribeEvent
+    public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
+        dev.blemm.essentials.menu.CompassMenu.open(player);
     }
 
     @SubscribeEvent
