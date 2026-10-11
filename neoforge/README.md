@@ -16,7 +16,7 @@ Native NeoForge server mod targeting Minecraft 26.3 and Java 25.
 
 Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
-The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, or full item stack metadata in auction listings.
+The NeoForge port uses native vanilla GUIs. It is not a Bukkit plugin and cannot load DiscordSRV, PlaceholderAPI, Geyser-Spigot/Floodgate plugins, or Multiverse-Core directly. Discord auction announcements use the configurable webhook; native cross-dimension warps work when the target dimension is loaded. No standard compatible third-party placeholder API is currently wired in.
 
 Build with Java 25: `gradle -p neoforge build`.
 
