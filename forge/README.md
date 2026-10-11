@@ -34,3 +34,6 @@ The mod ports can announce new auctions without DiscordSRV by using a Discord we
 ### Per-dimension command disabling on mod loaders
 
 After first start, edit `blemmessentials/disabled-commands.properties`. Use dimension IDs as keys, such as `minecraft_the_end=rtp,home,sethome`, or `*=rtp` to disable a command in every dimension. List command names separated by commas; leave a value empty to allow all BlemmEssentials commands in that dimension.
+
+
+`/shop` opens the category-based vanilla chest GUI. Left-click buys one item; right-click buys a stack. The command form `/shop <item> <amount>` remains available.
