@@ -11,7 +11,7 @@ BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the ref
 | Forge | `forge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 | NeoForge | `neoforge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 
-The mod ports are a functional first pass, **not exact feature parity**. The Paper inventory GUI, Paper's exact selling rules and category assignments, DiscordSRV announcements, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, per-world command disabling, and Paper-specific menu/compass behavior are not ported to the mod loaders. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop and auction house are command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings preserve item type and stack count but not custom item metadata.
+The mod ports are a functional first pass, **not exact feature parity**. The Paper inventory GUI, Paper's exact selling rules and category assignments, DiscordSRV announcements, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, and Paper-specific menu/compass behavior are not ported to the mod loaders. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop and auction house are command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings preserve item type and stack count but not custom item metadata.
 
 ## Commands in the mod ports
 
@@ -24,6 +24,11 @@ The mod ports are a functional first pass, **not exact feature parity**. The Pap
 - `/shopprices` — show price configuration keys and supported categories.
 
 Mod-loader shop prices are editable in `blemmessentials/shop-prices.properties` after the first server start. Configure category defaults with `default.<category>.buy` and `default.<category>.sell`, or override an item with `item.<namespace:id>.buy` and `item.<namespace:id>.sell`. A sell price of `0` disables selling that item.
+
+### Per-dimension command disabling on mod loaders
+
+After first start, edit `blemmessentials/disabled-commands.properties`. Use dimension IDs as keys, such as `minecraft:the_end=rtp,home,sethome`, or `*=rtp` to disable a command in every dimension. List command names separated by commas; leave a value empty to allow all BlemmEssentials commands in that dimension.
+
 
 ### Discord auction announcements on mod loaders
 
