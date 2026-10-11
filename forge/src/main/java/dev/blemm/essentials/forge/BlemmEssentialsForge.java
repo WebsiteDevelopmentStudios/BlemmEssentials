@@ -45,7 +45,6 @@ public final class BlemmEssentialsForge {
     public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
         if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
-        event.setCanceled(true);
         dev.blemm.essentials.menu.CompassMenu.open(player);
     }
 
