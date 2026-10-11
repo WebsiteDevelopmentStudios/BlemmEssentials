@@ -181,7 +181,14 @@ public final class LocationCommands {
 
     private static int setHome(ServerPlayer player, String name, MinecraftServer server) {
         synchronized (LocationCommands.class) {
-            DATA.setProperty(homeKey(player.getUUID(), name), encode(player));
+            String key = homeKey(player.getUUID(), name);
+            String prefix = "home." + player.getUUID() + ".";
+            long homeCount = DATA.stringPropertyNames().stream().filter(existing -> existing.startsWith(prefix)).count();
+            if (!DATA.containsKey(key) && homeCount >= 3) {
+                player.sendSystemMessage(Component.literal("You have reached the default limit of 3 homes."));
+                return 0;
+            }
+            DATA.setProperty(key, encode(player));
             save(server);
         }
         player.sendSystemMessage(Component.literal("Home '" + name + "' saved."));
