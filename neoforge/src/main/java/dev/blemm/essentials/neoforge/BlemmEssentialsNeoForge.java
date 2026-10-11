@@ -216,7 +216,7 @@ public final class BlemmEssentialsNeoForge {
                     }
                     String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
                     int amount = held.getCount();
-                    AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, itemId, amount, context.getSource().getServer());
+                    AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, held.copy(), context.getSource().getServer());
                     dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller.getGameProfile().name(), itemId, amount, price);
                     seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
                     seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
@@ -250,10 +250,10 @@ public final class BlemmEssentialsNeoForge {
                         return 0;
                     }
                     AuctionStore.remove(id, context.getSource().getServer());
-                    net.minecraft.world.item.ItemStack bought = new net.minecraft.world.item.ItemStack(item, listing.amount());
+                    net.minecraft.world.item.ItemStack bought = AuctionStore.restoreStack(listing, context.getSource().getServer());
                     if (!buyer.getInventory().add(bought)) {
                         ECONOMY.deposit(buyer.getUUID(), listing.price());
-                        AuctionStore.create(listing.seller(), listing.price(), listing.itemId(), listing.amount(), context.getSource().getServer());
+                        AuctionStore.create(listing, context.getSource().getServer());
                         ECONOMY.save(context.getSource().getServer());
                         context.getSource().sendFailure(Component.literal("Could not add the item to your inventory; purchase refunded."));
                         return 0;
@@ -287,7 +287,7 @@ public final class BlemmEssentialsNeoForge {
                         return 0;
                     }
                     AuctionStore.remove(id, context.getSource().getServer());
-                    seller.getInventory().add(new net.minecraft.world.item.ItemStack(item, listing.amount()));
+                    seller.getInventory().add(AuctionStore.restoreStack(listing, context.getSource().getServer()));
                     seller.sendSystemMessage(Component.literal("Auction #" + id + " was cancelled and returned."));
                     return 1;
                 }))));
