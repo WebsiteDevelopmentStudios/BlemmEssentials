@@ -1,47 +1,64 @@
 # BlemmEssentials
 
-BlemmEssentials is a server-essentials project targeting Minecraft 26.3 and Java 25.
-
-The Paper/Purpur plugin is the reference implementation and includes economy, teleports, homes, warps, ranks, categorised shop, selling, and auction house features. The Fabric, Forge, and NeoForge ports are separate native mods; they cannot load the Paper plugin JAR.
+BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the reference implementation; Fabric, Forge, and NeoForge use native server mods because the Paper plugin JAR cannot run on mod loaders.
 
 ## Platform status
 
-| Platform | Build project | Currently ported |
+| Platform | Project | Current scope |
 | --- | --- | --- |
-| Paper/Purpur | `paper/` | Full reference feature set |
-| Fabric | `fabric/` | Initial economy commands: `/balance`, `/money`, `/pay` |
-| Forge | `forge/` | Initial economy commands: `/balance`, `/money`, `/pay` |
-| NeoForge | `neoforge/` | Initial economy commands: `/balance`, `/money`, `/pay` |
+| Paper/Purpur | `paper/` | Reference implementation: economy, teleports, homes, warps, ranks, shop, selling, auction house, integrations, and GUI flows |
+| Fabric | `fabric/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
+| Forge | `forge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
+| NeoForge | `neoforge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 
-The three mod ports are an initial compatibility layer, **not yet feature-parity replacements** for the Paper plugin. Homes, teleports, warps, ranks, shops, auctions, optional integrations, and the Paper GUI flows still need to be ported and tested independently on each loader.
+The mod ports are a functional first pass, **not exact feature parity**. The Paper category GUI, selling rules and all category-specific pricing, chat/tab rank prefixes, DiscordSRV announcements, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, per-world command disabling, and Paper-specific menu/compass behavior are not ported to the mod loaders. The loader shop and auction house are command-based, and auction listings preserve item type and stack count but not custom item metadata.
 
-## Economy commands on the mod ports
+## Commands in the mod ports
 
-- `/balance` or `/money` — show your balance.
-- `/pay <player> <amount>` — transfer money to an online player.
+### Economy and trading
+- `/balance` or `/money` — view your balance.
+- `/pay <player> <amount>` — pay an online player.
 - `/money <player> <amount>` — operator-only balance adjustment.
+- `/shop <item> <amount>` — buy up to 64 of an item by registry ID (for example, `diamond` or `minecraft:iron_ingot`).
+- `/sell` — sell the stack in your main hand.
+- `/ah list` — list auctions.
+- `/ah sell <price>` — list the held stack.
+- `/ah buy <id>` — purchase a listing.
+- `/ah cancel <id>` — cancel your listing (seller must be online).
 
-Mod-port balances are stored in `blemmessentials/balances.tsv` in the server directory. Paper continues to use its own configuration and storage; data is not automatically shared between platforms.
+### Homes, warps, and teleporting
+- `/sethome [name]`, `/home [name]`, `/delhome <name>` — manage up to three homes.
+- `/setwarp <name>`, `/warp <name>`, `/delwarp <name>` — manage operator warps.
+- `/setlobby`, `/lobby` — set and visit the lobby.
+- `/rtp` — attempt a safe random teleport within 100–5,000 blocks of your current position.
+- `/tpa <player>`, `/tpahere <player>`, `/tpaccept`, `/tpdeny` — teleport requests expire after 60 seconds.
+
+### Friends and ranks
+- `/friend add <player>`, `/friend remove <player>`, `/friend list` — manage friends (both players must be online to add/remove).
+- `/homefriends` — toggle whether friends can visit your homes.
+- `/homevisit <player> <home>` — visit a friend's home when they have enabled visits.
+- `/rank`, `/rank <player>`, `/rank set <player> <member|vip|mvp|admin>` — view ranks; operators can set them.
+- `/help-` — show the command summary.
+
+Mod-port balances, locations, auctions, ranks, and friend preferences persist under the server directory in `blemmessentials/`. Paper uses its own data files; data is not automatically shared across platforms. New mod-port players start with $100.
 
 ## Paper integrations
 
-Optional integrations include Geyser + Floodgate, DiscordSRV, Multiverse-Core, and PlaceholderAPI.
+Optional Paper integrations include Geyser + Floodgate, DiscordSRV, Multiverse-Core, and PlaceholderAPI.
 
 ### Discord + Bedrock skins
-
 1. Install DiscordSRV and PlaceholderAPI.
 2. In DiscordSRV `config.yml`, set `AvatarUrl: "%blemm_discord_avatar%"`.
-3. Java players use their normal avatar; Bedrock players (Floodgate UUIDs) use the skin Geyser uploaded, looked up from the GeyserMC skin API.
+3. Java players use their normal avatar; Bedrock players use the skin uploaded by Geyser, looked up from the GeyserMC skin API.
 
 ### Per-world disabling
-
 Paper supports `disabled-commands` in `config.yml`, e.g. `world_the_end: [rtp, home, compass]`.
 
 ## Build
 
 - Paper: `mvn -f paper/pom.xml package` (Java 25).
 - Fabric: `gradle -p fabric build` (Java 25).
-- Forge: `gradle -p forge build` (Java 25).
+- Forge: `gradle -p forge build` (Java 25; ForgeGradle uses a JDK 21 runtime with a Java 25 toolchain in CI).
 - NeoForge: `gradle -p neoforge build` (Java 25).
 
-GitHub Actions builds each platform independently and assembles `BlemmEssentials-all-platforms.zip` only if all four builds succeed.
+GitHub Actions assembles `BlemmEssentials-all-platforms.zip` only after all four platform builds succeed. Run dedicated-server smoke tests before using the new mod ports on a production server.
