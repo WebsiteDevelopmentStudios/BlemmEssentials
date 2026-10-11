@@ -46,7 +46,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     return 1;
                 })
                 .then(argument("player", EntityArgument.player())
-                    .requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer player && source.getServer().getPlayerList().isOp(player.getGameProfile())))
+                    .requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer player && source.getServer().getPlayerList().isOp(player.nameAndId())))
                     .then(argument("amount", LongArgumentType.longArg(0))
                         .executes(context -> {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
