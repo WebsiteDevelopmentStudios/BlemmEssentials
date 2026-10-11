@@ -11,7 +11,7 @@ BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the ref
 | Forge | `forge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 | NeoForge | `neoforge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 
-The mod ports are a functional first pass, **not exact feature parity**. The Paper category GUI, selling rules and all category-specific pricing, chat/tab rank prefixes, DiscordSRV announcements, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, per-world command disabling, and Paper-specific menu/compass behavior are not ported to the mod loaders. The loader shop and auction house are command-based, and auction listings preserve item type and stack count but not custom item metadata.
+The mod ports are a functional first pass, **not exact feature parity**. The Paper category GUI, selling rules and all category-specific pricing, DiscordSRV announcements, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, per-world command disabling, and Paper-specific menu/compass behavior are not ported to the mod loaders. The loader shop and auction house are command-based, rank prefixes use vanilla scoreboard teams, and auction listings preserve item type and stack count but not custom item metadata.
 
 ## Commands in the mod ports
 
@@ -41,7 +41,7 @@ Mod-loader shop prices are editable in `blemmessentials/shop-prices.properties` 
 - `/friend add <player>`, `/friend remove <player>`, `/friend list` — manage friends (both players must be online to add/remove).
 - `/homefriends` — toggle whether friends can visit your homes.
 - `/homevisit <player> <home>` — visit a friend's home when they have enabled visits.
-- `/rank`, `/rank <player>`, `/rank set <player> <member|vip|mvp|admin>` — view ranks; operators can set them.
+- `/rank`, `/rank <player>`, `/rank set <player> <member|vip|mvp|admin>` — view ranks; operators can set them. VIP, MVP, and Admin ranks get colored chat/tab prefixes.
 - `/help-` — show the command summary.
 
 Mod-port balances, locations, auctions, ranks, and friend preferences persist under the server directory in `blemmessentials/`. Paper uses its own data files; data is not automatically shared across platforms. New mod-port players start with $100.
