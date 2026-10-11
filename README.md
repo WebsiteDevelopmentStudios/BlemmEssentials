@@ -20,6 +20,10 @@ The mod ports are a functional first pass, **not exact feature parity**. The Pap
 - `/pay <player> <amount>` — pay an online player.
 - `/money <player> <amount>` — operator-only balance adjustment.
 - `/shop <item> <amount>` — buy up to one stack of an item by registry ID (for example, `diamond` or `minecraft:iron_ingot`).
+- `/shopprice <item>` — inspect an item's current buy/sell prices.
+- `/shopprices` — show price configuration keys and supported categories.
+
+Mod-loader shop prices are editable in `blemmessentials/shop-prices.properties` after the first server start. Configure category defaults with `default.<category>.buy` and `default.<category>.sell`, or override an item with `item.<namespace:id>.buy` and `item.<namespace:id>.sell`. A sell price of `0` disables selling that item.
 - `/sell` — sell the stack in your main hand.
 - `/ah list` — list auctions.
 - `/ah sell <price>` — list the held stack.
