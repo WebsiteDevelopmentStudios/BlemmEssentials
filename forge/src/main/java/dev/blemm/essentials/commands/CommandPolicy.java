@@ -35,7 +35,7 @@ public final class CommandPolicy {
         try {
             Files.createDirectories(file.getParent());
             try (OutputStream out = Files.newOutputStream(file)) {
-                CONFIG.store(out, "Disable command names per dimension ID, replacing ":" with "_", e.g. minecraft_the_end=rtp,home,sethome. Use *=... for every dimension.");
+                CONFIG.store(out, "Disable command names per dimension ID, using underscores instead of colons, e.g. minecraft_the_end=rtp,home,sethome. Use *=... for every dimension.");
             }
         } catch (IOException e) { throw new IllegalStateException("Could not save BlemmEssentials command policy", e); }
     }
