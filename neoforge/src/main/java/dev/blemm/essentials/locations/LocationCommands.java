@@ -201,7 +201,7 @@ public final class LocationCommands {
                 return 0;
             }
             ThreadLocalRandom random = ThreadLocalRandom.current();
-            BlockPos spawn = level.getSharedSpawnPos();
+            BlockPos spawn = player.blockPosition();
             for (int attempt = 0; attempt < 32; attempt++) {
                 int radius = random.nextInt(100, 5001);
                 double angle = random.nextDouble(0, Math.PI * 2);
