@@ -33,7 +33,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> dev.blemm.essentials.ranks.RankPresentation.apply(handler.player));
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); });
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -226,6 +226,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
                     int amount = held.getCount();
                     AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, itemId, amount, context.getSource().getServer());
+                    dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller.getGameProfile().name(), itemId, amount, price);
                     seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
                     seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
                     return 1;
