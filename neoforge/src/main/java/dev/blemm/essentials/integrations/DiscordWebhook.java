@@ -1,6 +1,7 @@
 package dev.blemm.essentials.integrations;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,7 +42,9 @@ public final class DiscordWebhook {
         } catch (IOException e) { throw new IllegalStateException("Could not save BlemmEssentials Discord settings", e); }
     }
 
-    public static void announceAuction(String seller, String itemId, int amount, long price) {
+    public static void announceAuction(ServerPlayer sellerPlayer, String itemId, int amount, long price) {
+        String seller = sellerPlayer.getGameProfile().name();
+        String avatar = BedrockAvatarLookup.avatarUrl(sellerPlayer);
         String url;
         synchronized (DiscordWebhook.class) { url = CONFIG.getProperty("webhook-url", "").trim(); }
         if (!url.startsWith("https://discord.com/api/webhooks/") && !url.startsWith("https://discordapp.com/api/webhooks/")) return;
