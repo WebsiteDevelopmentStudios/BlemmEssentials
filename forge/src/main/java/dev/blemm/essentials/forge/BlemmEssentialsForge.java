@@ -262,10 +262,10 @@ public final class BlemmEssentialsForge {
     }
 
     @SubscribeEvent
-    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); }
+    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); }
 
     @SubscribeEvent
-    public void onServerStopping(ServerStoppingEvent event) { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); }
+    public void onServerStopping(ServerStoppingEvent event) { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); }
 
     private static long priceFor(String itemId) {
         return switch (itemId) {
