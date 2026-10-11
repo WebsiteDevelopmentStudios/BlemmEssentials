@@ -11,7 +11,7 @@ BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the ref
 | Forge | `forge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 | NeoForge | `neoforge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 
-The mod ports are a functional first pass, **not exact feature parity**. Paper's exact shop GUI flows and selling rules/category assignments, DiscordSRV itself, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, and Paper-specific menu/compass behavior are not ported to the mod loaders. The mod ports offer an optional Discord webhook as an alternative for auction announcements. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop has a native vanilla chest GUI and command access; the auction house is command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings preserve item type and stack count but not custom item metadata.
+The mod ports are a functional first pass, **not exact feature parity**. Paper's exact shop GUI flows and selling rules/category assignments, DiscordSRV itself, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, and Paper-specific menu/compass behavior are not ported to the mod loaders. The mod ports offer an optional Discord webhook as an alternative for auction announcements. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop has a native vanilla chest GUI and command access; the auction house is command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings now persist the complete item stack, including custom components, names, lore, and enchantments.
 
 ## Commands in the mod ports
 
@@ -77,3 +77,6 @@ Paper supports `disabled-commands` in `config.yml`, e.g. `world_the_end: [rtp, h
 - NeoForge: `gradle -p neoforge build` (Java 25).
 
 GitHub Actions assembles `BlemmEssentials-all-platforms.zip` only after all four platform builds succeed. Run dedicated-server smoke tests before using the new mod ports on a production server.
+
+
+Auction listings now serialize the complete item stack through Minecraft's registry-aware item codec, preserving custom names, lore, enchantments, and other item components across server restarts. Existing listings from older versions remain readable and fall back to plain item stacks.
