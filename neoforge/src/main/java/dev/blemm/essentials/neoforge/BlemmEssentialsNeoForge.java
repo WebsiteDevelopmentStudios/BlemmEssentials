@@ -31,8 +31,8 @@ public final class BlemmEssentialsNeoForge {
 
     public BlemmEssentialsNeoForge(IEventBus modEventBus) {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
-        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); });
-        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); });
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
