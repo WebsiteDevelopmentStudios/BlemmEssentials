@@ -18,7 +18,7 @@ public final class PlaceholderValues {
             case "balance" -> Long.toString(dev.blemm.essentials.forge.BlemmEssentialsForge.balanceFor(player.getUUID()));
             case "rank" -> RankStore.get(player.getUUID());
             case "rank_prefix" -> prefix(RankStore.get(player.getUUID()));
-            case "world" -> player.level().dimension().location().toString();
+            case "world" -> player.level().dimension().identifier().toString();
             case "is_bedrock" -> Boolean.toString(BedrockAvatarLookup.isBedrock(player.getUUID()));
             case "discord_avatar" -> BedrockAvatarLookup.avatarUrl(player);
             case "player" -> player.getGameProfile().name();
