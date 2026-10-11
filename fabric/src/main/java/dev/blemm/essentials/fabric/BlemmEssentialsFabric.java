@@ -94,7 +94,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
         private final Map<UUID, Long> balances = new HashMap<>();
         private Path file;
 
-        long balance(UUID player) { return balances.getOrDefault(player, 0L); }
+        long balance(UUID player) { return balances.getOrDefault(player, 100L); }
         void setBalance(UUID player, long amount) { balances.put(player, amount); }
 
         boolean transfer(UUID from, UUID to, long amount) {
