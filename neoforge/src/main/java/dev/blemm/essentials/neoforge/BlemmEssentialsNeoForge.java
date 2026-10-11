@@ -32,18 +32,21 @@ public final class BlemmEssentialsNeoForge {
 
     public BlemmEssentialsNeoForge(IEventBus modEventBus) {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
-        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) dev.blemm.essentials.ranks.RankPresentation.apply(player);
+        });
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); dev.blemm.essentials.shop.ShopPrices.load(event.getServer()); dev.blemm.essentials.integrations.DiscordWebhook.load(event.getServer()); dev.blemm.essentials.commands.CommandPolicy.load(event.getServer()); });
         NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); FriendStore.save(event.getServer()); });
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
         var dispatcher = event.getDispatcher();
-        dispatcher.register(Commands.literal("balance").executes(context -> {
+        dispatcher.register(Commands.literal("balance").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "balance")).executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
             return 1;
         }));
-        dispatcher.register(Commands.literal("money")
+        dispatcher.register(Commands.literal("money").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "money"))
             .executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
@@ -59,7 +62,7 @@ public final class BlemmEssentialsNeoForge {
                     target.sendSystemMessage(Component.literal("Your balance is now $" + amount + "."));
                     return 1;
                 }))));
-        dispatcher.register(Commands.literal("pay")
+        dispatcher.register(Commands.literal("pay").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "pay"))
             .then(Commands.argument("player", EntityArgument.player())
                 .then(Commands.argument("amount", LongArgumentType.longArg(1)).executes(context -> {
                     ServerPlayer sender = context.getSource().getPlayerOrException();
@@ -78,7 +81,23 @@ public final class BlemmEssentialsNeoForge {
                     target.sendSystemMessage(Component.literal(sender.getGameProfile().name() + " paid you $" + amount + "."));
                     return 1;
                 }))));
-        dispatcher.register(Commands.literal("shop")
+            dispatcher.register(Commands.literal("shopprice").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "shopprice"))
+                .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+                    String rawItemId = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item").toLowerCase(java.util.Locale.ROOT);
+                    final String itemId = rawItemId.contains(":") ? rawItemId : "minecraft:" + rawItemId;
+                    context.getSource().sendSuccess(() -> Component.literal(itemId + " — buy: $" +
+                        dev.blemm.essentials.shop.ShopPrices.buy(itemId) + ", sell: $" +
+                        dev.blemm.essentials.shop.ShopPrices.sell(itemId) +
+                        " (edit blemmessentials/shop-prices.properties to customize prices)"), false);
+                    return 1;
+                })));
+            dispatcher.register(Commands.literal("shopprices").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "shopprices")).executes(context -> {
+                context.getSource().sendSuccess(() -> Component.literal("Shop prices are editable in blemmessentials/shop-prices.properties. " +
+                    "Keys use default.<category>.buy/sell or item.<namespace:id>.buy/sell. Categories: building_blocks, natural, ores_minerals, tools, combat, food, farming, redstone, decoration, brewing, transport, miscellaneous."), false);
+                return 1;
+            }));
+        dispatcher.register(Commands.literal("shop").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "shop"))
+            .executes(context -> { ServerPlayer player = context.getSource().getPlayerOrException(); openShop(player, context.getSource().getServer()); return 1; })
             .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word())
                 .then(Commands.argument("amount", LongArgumentType.longArg(1, 64)).executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
@@ -119,7 +138,7 @@ public final class BlemmEssentialsNeoForge {
                     context.getSource().sendSuccess(() -> Component.literal("Bought " + amount + " " + itemId + " for $" + price + "."), false);
                     return 1;
                 }))));
-        dispatcher.register(Commands.literal("sell")
+        dispatcher.register(Commands.literal("sell").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "sell"))
             .executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 net.minecraft.world.item.ItemStack stack = player.getMainHandItem();
@@ -129,7 +148,12 @@ public final class BlemmEssentialsNeoForge {
                 }
                 String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
                 int amount = stack.getCount();
-                long payout = Math.max(1L, priceFor(itemId) / 4L) * amount;
+                long unitSellPrice = dev.blemm.essentials.shop.ShopPrices.sell(itemId);
+                if (unitSellPrice <= 0) {
+                    context.getSource().sendFailure(Component.literal("This item cannot be sold."));
+                    return 0;
+                }
+                long payout = unitSellPrice * amount;
                 stack.shrink(amount);
                 player.getInventory().setItem(player.getInventory().getSelectedSlot(), stack.isEmpty() ? net.minecraft.world.item.ItemStack.EMPTY : stack);
                 ECONOMY.deposit(player.getUUID(), payout);
@@ -137,7 +161,7 @@ public final class BlemmEssentialsNeoForge {
                 context.getSource().sendSuccess(() -> Component.literal("Sold " + amount + " " + itemId + " for $" + payout + "."), false);
                 return 1;
             }));
-        dispatcher.register(Commands.literal("rank")
+        dispatcher.register(Commands.literal("rank").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "rank"))
             .executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 context.getSource().sendSuccess(() -> Component.literal("Your rank: " + RankStore.get(player.getUUID())), false);
@@ -154,6 +178,7 @@ public final class BlemmEssentialsNeoForge {
                             context.getSource().sendFailure(Component.literal("Valid ranks: member, vip, mvp, admin."));
                             return 0;
                         }
+                        dev.blemm.essentials.ranks.RankPresentation.apply(target);
                         context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s rank to " + rank.toLowerCase(java.util.Locale.ROOT) + "."), true);
                         target.sendSystemMessage(Component.literal("Your rank is now " + RankStore.get(target.getUUID()) + "."));
                         return 1;
@@ -163,11 +188,11 @@ public final class BlemmEssentialsNeoForge {
                 context.getSource().sendSuccess(() -> Component.literal(target.getGameProfile().name() + "'s rank: " + RankStore.get(target.getUUID())), false);
                 return 1;
             })));
-        dispatcher.register(Commands.literal("help-").executes(context -> {
+        dispatcher.register(Commands.literal("help-").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "help-")).executes(context -> {
             context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /lobby, /setlobby, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
             return 1;
         }));
-        dispatcher.register(Commands.literal("ah")
+        dispatcher.register(Commands.literal("ah").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "ah"))
             .then(Commands.literal("list").executes(context -> {
                 var listings = AuctionStore.listings();
                 if (listings.isEmpty()) {
@@ -191,7 +216,8 @@ public final class BlemmEssentialsNeoForge {
                     }
                     String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
                     int amount = held.getCount();
-                    AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, itemId, amount, context.getSource().getServer());
+                    AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, held.copy(), context.getSource().getServer());
+                    dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller.getGameProfile().name(), itemId, amount, price);
                     seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
                     seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
                     return 1;
@@ -224,10 +250,10 @@ public final class BlemmEssentialsNeoForge {
                         return 0;
                     }
                     AuctionStore.remove(id, context.getSource().getServer());
-                    net.minecraft.world.item.ItemStack bought = new net.minecraft.world.item.ItemStack(item, listing.amount());
+                    net.minecraft.world.item.ItemStack bought = AuctionStore.restoreStack(listing, context.getSource().getServer());
                     if (!buyer.getInventory().add(bought)) {
                         ECONOMY.deposit(buyer.getUUID(), listing.price());
-                        AuctionStore.create(listing.seller(), listing.price(), listing.itemId(), listing.amount(), context.getSource().getServer());
+                        AuctionStore.create(listing, context.getSource().getServer());
                         ECONOMY.save(context.getSource().getServer());
                         context.getSource().sendFailure(Component.literal("Could not add the item to your inventory; purchase refunded."));
                         return 0;
@@ -261,25 +287,42 @@ public final class BlemmEssentialsNeoForge {
                         return 0;
                     }
                     AuctionStore.remove(id, context.getSource().getServer());
-                    seller.getInventory().add(new net.minecraft.world.item.ItemStack(item, listing.amount()));
+                    seller.getInventory().add(AuctionStore.restoreStack(listing, context.getSource().getServer()));
                     seller.sendSystemMessage(Component.literal("Auction #" + id + " was cancelled and returned."));
                     return 1;
                 }))));
         LocationCommands.register(dispatcher);
     }
 
+    private static void openShop(ServerPlayer player, MinecraftServer server) {
+        dev.blemm.essentials.shop.ShopMenu.openCategories(player, (buyer, stack) -> {
+            String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+            long unitPrice = dev.blemm.essentials.shop.ShopPrices.buy(itemId);
+            long total = unitPrice * stack.getCount();
+            if (unitPrice <= 0 || total < 0) {
+                buyer.sendSystemMessage(Component.literal("This item is not available for purchase."));
+                return;
+            }
+            if (buyer.getInventory().getFreeSlot() < 0) {
+                buyer.sendSystemMessage(Component.literal("Free an inventory slot before buying."));
+                return;
+            }
+            if (!ECONOMY.withdraw(buyer.getUUID(), total)) {
+                buyer.sendSystemMessage(Component.literal("Insufficient funds. This purchase costs $" + total + "."));
+                return;
+            }
+            if (!buyer.getInventory().add(stack.copy())) {
+                ECONOMY.deposit(buyer.getUUID(), total);
+                buyer.sendSystemMessage(Component.literal("Could not add the item; purchase refunded."));
+                return;
+            }
+            ECONOMY.save(server);
+            buyer.sendSystemMessage(Component.literal("Bought " + stack.getCount() + "x " + itemId + " for $" + total + "."));
+        });
+    }
+
     private static long priceFor(String itemId) {
-        return switch (itemId) {
-            case "minecraft:diamond" -> 250L;
-            case "minecraft:iron_ingot" -> 40L;
-            case "minecraft:gold_ingot" -> 55L;
-            case "minecraft:emerald" -> 150L;
-            case "minecraft:bread" -> 8L;
-            case "minecraft:cooked_beef" -> 18L;
-            case "minecraft:obsidian" -> 90L;
-            case "minecraft:ender_pearl" -> 45L;
-            default -> 10L;
-        };
+        return dev.blemm.essentials.shop.ShopPrices.buy(itemId);
     }
 
     private static final class EconomyStore {
