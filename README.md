@@ -19,6 +19,7 @@ The mod ports are a functional first pass, **not exact feature parity**. Paper's
 - `/balance` or `/money` — view your balance.
 - `/pay <player> <amount>` — pay an online player.
 - `/money <player> <amount>` — operator-only balance adjustment.
+- `/shop` — open the native category-based shop GUI. Left-click buys one; right-click buys a stack.
 - `/shop <item> <amount>` — buy up to one stack of an item by registry ID (for example, `diamond` or `minecraft:iron_ingot`).
 - `/shopprice <item>` — inspect an item's current buy/sell prices.
 - `/shopprices` — show price configuration keys and supported categories.
