@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -37,8 +38,8 @@ public final class CompassMenu {
 
     /** Ensures players have a menu compass; if it is lost, it is replaced on their next join. */
     public static void onJoin(ServerPlayer player) {
-        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
-            if (isMenuCompass(stack)) return;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (isMenuCompass(player.getInventory().getItem(i))) return;
         }
         ItemStack compass = makeCompass();
         if (!player.getInventory().add(compass)) player.drop(compass, false);
@@ -84,7 +85,8 @@ public final class CompassMenu {
                 default -> null;
             };
             if (command == null) return;
-            MinecraftServer server = serverPlayer.level().getServer();
+            if (!(serverPlayer.level() instanceof ServerLevel level)) return;
+            MinecraftServer server = level.getServer();
             serverPlayer.closeContainer();
             server.getCommands().performPrefixedCommand(serverPlayer.createCommandSourceStack(), command);
         }
