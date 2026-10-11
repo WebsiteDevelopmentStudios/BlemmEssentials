@@ -1,0 +1,37 @@
+name: BlemmEssentials
+main: dev.blemm.essentials.BlemmEssentials
+version: ${project.version}
+api-version: '26.1'
+author: Blemm
+description: Economy, teleports, homes, warps, ranks, shop, auctions, Discord and Bedrock support.
+softdepend: [Multiverse-Core, DiscordSRV, Geyser-Spigot, floodgate, PlaceholderAPI]
+
+commands:
+  money: {description: Check a balance., aliases: [bal, balance], usage: /money [player]}
+  pay: {description: Send money., usage: /pay <player> <amount>}
+  tpa: {description: Request to teleport to a player., usage: /tpa <player>}
+  tpahere: {description: Request a player to teleport to you., usage: /tpahere <player>}
+  tpaccept: {description: Accept a teleport request., usage: /tpaccept [player]}
+  tpdeny: {description: Deny a teleport request., usage: /tpdeny [player]}
+  rtp: {description: Random teleport., usage: /rtp}
+  sethome: {description: Save a home., usage: /sethome [name]}
+  home: {description: Teleport to a home., usage: /home [name]}
+  delhome: {description: Delete a home., usage: /delhome <name>}
+  setwarp: {description: Create or replace a warp in your current world., usage: /setwarp <name>}
+  warp: {description: List warps or teleport to one., usage: /warp [list|name]}
+  delwarp: {description: Delete a warp., usage: /delwarp <name>}
+  lobby: {description: Go to the lobby., usage: /lobby}
+  setlobby: {description: Set the lobby., usage: /setlobby}
+  help-: {description: Show BlemmEssentials commands., usage: /help-}
+  admin: {description: Admin commands., usage: /admin help}
+  friend: {description: Manage friends., usage: /friend <add|remove|list> [player]}
+  homefriends: {description: Toggle friend home visits., usage: /homefriends [on|off|toggle]}
+  homevisit: {description: Visit a friend's home., usage: /homevisit <friend> [home]}
+  ah: {description: Auction house., usage: /ah [sell <price> [amount]|buy <id>|cancel <id>|claim]}
+  shop: {description: Open the shop., usage: /shop}
+  sell: {description: Sell items., usage: /sell [all]}
+  rank: {description: View or set ranks., usage: /rank [list|info [player]|set <player> <rank>]}
+
+permissions:
+  blemmessentials.rtp: {description: Use random teleport., default: true}
+  blemmessentials.bypass.worlds: {description: Ignore per-world command blocking., default: op}

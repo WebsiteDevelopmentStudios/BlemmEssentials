@@ -1,0 +1,84 @@
+starting-balance: 100.00
+max-homes: 3            # fallback when a rank has no max-homes
+tpa-timeout-seconds: 60
+auction-expiration-hours: 168
+admin-tag: Admin
+give-compass-on-first-join: true
+
+rtp:
+  minimum-radius: 100
+  maximum-radius: 5000
+  attempts: 32
+
+# Command names (and "compass") that are DISABLED per world. "*" applies to every world.
+# Players with blemmessentials.bypass.worlds or the admin tag ignore this.
+disabled-commands:
+  "*": []
+  # world_the_end: [rtp, sethome, home, compass]
+
+warps:
+  # A warp can only be used while standing in the world where /setwarp was run.
+  require-same-world: true
+  # Try "mv load <world>" when a warp's world is not loaded and Multiverse-Core is installed.
+  multiverse-load-worlds: true
+
+lobby:
+  # /lobby works from any world (it ignores require-same-world).
+  allow-from-any-world: true
+
+ranks:
+  member:
+    default: true
+    prefix: "&7[Member] "
+    max-homes: 3
+  vip:
+    prefix: "&a[VIP] "
+    max-homes: 6
+  mvp:
+    prefix: "&b[MVP] "
+    max-homes: 10
+  admin:
+    prefix: "&c[Admin] "
+    max-homes: 50
+chat-prefix: true
+tab-prefix: true
+
+discord:
+  # Requires DiscordSRV. Announces new auction listings to DiscordSRV's main channel.
+  announce-auctions: false
+  # Used by the %blemm_discord_avatar% PlaceholderAPI placeholder.
+  # In DiscordSRV config.yml set:  AvatarUrl: "%blemm_discord_avatar%"
+  # Placeholders: {uuid} {uuid-nodashes} {username} {texture} {size}
+  java-avatar-url: "https://crafthead.net/helm/{uuid-nodashes}/{size}"
+  bedrock-avatar-url: "https://crafthead.net/helm/{texture}/{size}"
+  fallback-avatar-url: "https://crafthead.net/helm/MHF_Steve/{size}"
+  avatar-size: 128
+
+shop:
+  # EVERY survival-obtainable item is automatically in the shop, sorted into categories.
+  # Prices are per item; 0 disables that action. Default prices per category:
+  default-prices:
+    "Building Blocks": {buy: 4.0, sell: 1.0}
+    "Natural":         {buy: 3.0, sell: 1.0}
+    "Ores & Minerals": {buy: 40.0, sell: 12.0}
+    "Tools":           {buy: 60.0, sell: 15.0}
+    "Combat":          {buy: 80.0, sell: 20.0}
+    "Food":            {buy: 6.0, sell: 2.0}
+    "Farming":         {buy: 5.0, sell: 1.5}
+    "Redstone":        {buy: 12.0, sell: 4.0}
+    "Decoration":      {buy: 6.0, sell: 1.5}
+    "Brewing":         {buy: 15.0, sell: 4.0}
+    "Transport":       {buy: 25.0, sell: 6.0}
+    "Miscellaneous":   {buy: 10.0, sell: 2.0}
+  # Extra material names to hide (creative-only items are already hidden automatically).
+  blocked-materials: []
+  # Optional per-item overrides. Optional "name" and "category".
+  items:
+    DIAMOND:       {name: "&bDiamond",       buy: 250.00, sell: 100.00, category: "Ores & Minerals"}
+    IRON_INGOT:    {name: "&fIron Ingot",    buy: 40.00,  sell: 15.00}
+    GOLD_INGOT:    {name: "&6Gold Ingot",    buy: 55.00,  sell: 20.00}
+    EMERALD:       {name: "&aEmerald",       buy: 150.00, sell: 60.00}
+    BREAD:         {name: "&eBread",         buy: 8.00,   sell: 3.00}
+    COOKED_BEEF:   {name: "&cCooked Beef",   buy: 18.00,  sell: 7.00}
+    OBSIDIAN:      {name: "&5Obsidian",      buy: 90.00,  sell: 30.00}
+    ENDER_PEARL:   {name: "&dEnder Pearl",   buy: 45.00,  sell: 15.00}
