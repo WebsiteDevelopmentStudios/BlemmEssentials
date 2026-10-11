@@ -19,7 +19,7 @@ The mod ports are a functional first pass, **not exact feature parity**. The Pap
 - `/balance` or `/money` — view your balance.
 - `/pay <player> <amount>` — pay an online player.
 - `/money <player> <amount>` — operator-only balance adjustment.
-- `/shop <item> <amount>` — buy up to 64 of an item by registry ID (for example, `diamond` or `minecraft:iron_ingot`).
+- `/shop <item> <amount>` — buy up to one stack of an item by registry ID (for example, `diamond` or `minecraft:iron_ingot`).
 - `/sell` — sell the stack in your main hand.
 - `/ah list` — list auctions.
 - `/ah sell <price>` — list the held stack.
