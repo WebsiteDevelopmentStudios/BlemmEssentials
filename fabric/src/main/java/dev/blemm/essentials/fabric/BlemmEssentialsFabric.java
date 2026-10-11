@@ -13,6 +13,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import dev.blemm.essentials.locations.LocationCommands;
 import dev.blemm.essentials.auction.AuctionStore;
+import dev.blemm.essentials.ranks.RankStore;
+import dev.blemm.essentials.friends.FriendStore;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,8 +31,8 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); });
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); });
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(literal("balance")
@@ -98,6 +100,11 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                         return 0;
                     }
                     int amount = (int) LongArgumentType.getLong(context, "amount");
+                    int stackLimit = new net.minecraft.world.item.ItemStack(item).getMaxStackSize();
+                    if (amount > stackLimit) {
+                        context.getSource().sendFailure(Component.literal("That item stacks to a maximum of " + stackLimit + "."));
+                        return 0;
+                    }
                     long price = priceFor(itemId.toString()) * amount;
                     if (player.getInventory().getFreeSlot() < 0) {
                         context.getSource().sendFailure(Component.literal("Free an inventory slot before buying."));
@@ -141,6 +148,36 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
                     return 1;
                 })));
+            dispatcher.register(Commands.literal("rank")
+            .executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                context.getSource().sendSuccess(() -> Component.literal("Your rank: " + RankStore.get(player.getUUID())), false);
+                return 1;
+            })
+            .then(Commands.literal("set")
+                .requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer operator
+                    && source.getServer().getPlayerList().isOp(operator.nameAndId())))
+                .then(Commands.argument("player", EntityArgument.player())
+                    .then(Commands.argument("rank", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+                        ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                        String rank = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "rank");
+                        if (!RankStore.set(target.getUUID(), rank, context.getSource().getServer())) {
+                            context.getSource().sendFailure(Component.literal("Valid ranks: member, vip, mvp, admin."));
+                            return 0;
+                        }
+                        context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s rank to " + rank.toLowerCase(java.util.Locale.ROOT) + "."), true);
+                        target.sendSystemMessage(Component.literal("Your rank is now " + RankStore.get(target.getUUID()) + "."));
+                        return 1;
+                    }))))
+            .then(Commands.argument("player", EntityArgument.player()).executes(context -> {
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                context.getSource().sendSuccess(() -> Component.literal(target.getGameProfile().name() + "'s rank: " + RankStore.get(target.getUUID())), false);
+                return 1;
+            })));
+        dispatcher.register(Commands.literal("help-").executes(context -> {
+            context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /lobby, /setlobby, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
+            return 1;
+        }));
         dispatcher.register(Commands.literal("ah")
             .then(Commands.literal("list").executes(context -> {
                 var listings = AuctionStore.listings();
@@ -239,7 +276,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     seller.sendSystemMessage(Component.literal("Auction #" + id + " was cancelled and returned."));
                     return 1;
                 }))));
-            LocationCommands.register(dispatcher);
+        LocationCommands.register(dispatcher);
         });
     }
 

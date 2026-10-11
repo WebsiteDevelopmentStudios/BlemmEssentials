@@ -8,6 +8,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import dev.blemm.essentials.locations.LocationCommands;
 import dev.blemm.essentials.auction.AuctionStore;
+import dev.blemm.essentials.ranks.RankStore;
+import dev.blemm.essentials.friends.FriendStore;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -30,8 +32,8 @@ public final class BlemmEssentialsNeoForge {
 
     public BlemmEssentialsNeoForge(IEventBus modEventBus) {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
-        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); });
-        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); FriendStore.save(event.getServer()); });
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
@@ -93,6 +95,11 @@ public final class BlemmEssentialsNeoForge {
                         return 0;
                     }
                     int amount = (int) LongArgumentType.getLong(context, "amount");
+                    int stackLimit = new net.minecraft.world.item.ItemStack(item).getMaxStackSize();
+                    if (amount > stackLimit) {
+                        context.getSource().sendFailure(Component.literal("That item stacks to a maximum of " + stackLimit + "."));
+                        return 0;
+                    }
                     long price = priceFor(itemId.toString()) * amount;
                     if (player.getInventory().getFreeSlot() < 0) {
                         context.getSource().sendFailure(Component.literal("Free an inventory slot before buying."));
@@ -130,6 +137,36 @@ public final class BlemmEssentialsNeoForge {
                 context.getSource().sendSuccess(() -> Component.literal("Sold " + amount + " " + itemId + " for $" + payout + "."), false);
                 return 1;
             }));
+        dispatcher.register(Commands.literal("rank")
+            .executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                context.getSource().sendSuccess(() -> Component.literal("Your rank: " + RankStore.get(player.getUUID())), false);
+                return 1;
+            })
+            .then(Commands.literal("set")
+                .requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer operator
+                    && source.getServer().getPlayerList().isOp(operator.nameAndId())))
+                .then(Commands.argument("player", EntityArgument.player())
+                    .then(Commands.argument("rank", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+                        ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                        String rank = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "rank");
+                        if (!RankStore.set(target.getUUID(), rank, context.getSource().getServer())) {
+                            context.getSource().sendFailure(Component.literal("Valid ranks: member, vip, mvp, admin."));
+                            return 0;
+                        }
+                        context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s rank to " + rank.toLowerCase(java.util.Locale.ROOT) + "."), true);
+                        target.sendSystemMessage(Component.literal("Your rank is now " + RankStore.get(target.getUUID()) + "."));
+                        return 1;
+                    }))))
+            .then(Commands.argument("player", EntityArgument.player()).executes(context -> {
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                context.getSource().sendSuccess(() -> Component.literal(target.getGameProfile().name() + "'s rank: " + RankStore.get(target.getUUID())), false);
+                return 1;
+            })));
+        dispatcher.register(Commands.literal("help-").executes(context -> {
+            context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /lobby, /setlobby, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
+            return 1;
+        }));
         dispatcher.register(Commands.literal("ah")
             .then(Commands.literal("list").executes(context -> {
                 var listings = AuctionStore.listings();

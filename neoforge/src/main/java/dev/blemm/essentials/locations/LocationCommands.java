@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import dev.blemm.essentials.friends.FriendStore;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -135,6 +136,64 @@ public final class LocationCommands {
             return teleport(context.getSource(), encoded, "Lobby location has not been set.");
         }));
 
+        dispatcher.register(Commands.literal("friend")
+            .then(Commands.literal("add").then(Commands.argument("player", EntityArgument.player()).executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                if (player.getUUID().equals(target.getUUID())) {
+                    context.getSource().sendFailure(Component.literal("You cannot add yourself as a friend."));
+                    return 0;
+                }
+                FriendStore.add(player.getUUID(), target.getUUID(), context.getSource().getServer());
+                player.sendSystemMessage(Component.literal(target.getGameProfile().name() + " added as a friend."));
+                target.sendSystemMessage(Component.literal(player.getGameProfile().name() + " added you as a friend."));
+                return 1;
+            })))
+            .then(Commands.literal("remove").then(Commands.argument("player", EntityArgument.player()).executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                FriendStore.remove(player.getUUID(), target.getUUID(), context.getSource().getServer());
+                context.getSource().sendSuccess(() -> Component.literal("Friend relationship removed."), false);
+                return 1;
+            })))
+            .then(Commands.literal("list").executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                var friends = FriendStore.friends(player.getUUID());
+                if (friends.isEmpty()) {
+                    context.getSource().sendSuccess(() -> Component.literal("Your friends list is empty."), false);
+                    return 1;
+                }
+                for (UUID friendId : friends) {
+                    ServerPlayer online = context.getSource().getServer().getPlayerList().getPlayer(friendId);
+                    String name = online == null ? friendId.toString() : online.getGameProfile().name();
+                    context.getSource().sendSuccess(() -> Component.literal("Friend: " + name), false);
+                }
+                return 1;
+            })));
+        dispatcher.register(Commands.literal("homefriends").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            boolean enabled = FriendStore.setHomeVisits(player.getUUID(),
+                !FriendStore.homeVisitsEnabled(player.getUUID()), context.getSource().getServer());
+            player.sendSystemMessage(Component.literal("Friends may now " + (enabled ? "visit" : "not visit") + " your homes."));
+            return 1;
+        }));
+        dispatcher.register(Commands.literal("homevisit")
+            .then(Commands.argument("player", EntityArgument.player())
+                .then(Commands.argument("home", StringArgumentType.word()).executes(context -> {
+                    ServerPlayer visitor = context.getSource().getPlayerOrException();
+                    ServerPlayer owner = EntityArgument.getPlayer(context, "player");
+                    String homeName = StringArgumentType.getString(context, "home");
+                    if (!FriendStore.areFriends(visitor.getUUID(), owner.getUUID())
+                        || !FriendStore.homeVisitsEnabled(owner.getUUID())) {
+                        context.getSource().sendFailure(Component.literal("That player has not enabled home visits for you."));
+                        return 0;
+                    }
+                    String encoded;
+                    synchronized (LocationCommands.class) {
+                        encoded = DATA.getProperty(homeKey(owner.getUUID(), homeName));
+                    }
+                    return teleport(context.getSource(), encoded, "That home does not exist.");
+                }))));
         dispatcher.register(Commands.literal("rtp").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             if (!(player.level() instanceof ServerLevel level)) {
@@ -272,8 +331,8 @@ public final class LocationCommands {
             target.sendSystemMessage(Component.literal("Teleport request denied."));
             return 1;
         }
-        ServerPlayer moving = request.teleportHere() ? requester : target;
-        ServerPlayer destination = request.teleportHere() ? target : requester;
+        ServerPlayer moving = request.teleportHere() ? target : requester;
+        ServerPlayer destination = request.teleportHere() ? requester : target;
         if (!(destination.level() instanceof ServerLevel destinationLevel)) {
             source.sendFailure(Component.literal("The destination world is unavailable."));
             return 0;
