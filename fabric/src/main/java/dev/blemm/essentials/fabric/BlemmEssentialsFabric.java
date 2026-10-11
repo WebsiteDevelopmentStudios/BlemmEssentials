@@ -1,0 +1,323 @@
+package dev.blemm.essentials.fabric;
+
+import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import dev.blemm.essentials.locations.LocationCommands;
+import dev.blemm.essentials.auction.AuctionStore;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+
+public final class BlemmEssentialsFabric implements ModInitializer {
+    private static final EconomyStore ECONOMY = new EconomyStore();
+
+    @Override
+    public void onInitialize() {
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); });
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            dispatcher.register(literal("balance")
+                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    long balance = ECONOMY.balance(player.getUUID());
+                    context.getSource().sendSuccess(() -> Component.literal("Balance: $" + balance), false);
+                    return 1;
+                }));
+
+            dispatcher.register(literal("money")
+                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
+                    return 1;
+                })
+                .then(argument("player", EntityArgument.player())
+                    .requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer player && source.getServer().getPlayerList().isOp(player.nameAndId())))
+                    .then(argument("amount", LongArgumentType.longArg(0))
+                        .executes(context -> {
+                            ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                            long amount = LongArgumentType.getLong(context, "amount");
+                            ECONOMY.setBalance(target.getUUID(), amount);
+                            ECONOMY.save(context.getSource().getServer());
+                            context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s balance to $" + amount + "."), true);
+                            target.sendSystemMessage(Component.literal("Your balance is now $" + amount + "."));
+                            return 1;
+                        }))));
+
+            dispatcher.register(literal("pay")
+                .then(argument("player", EntityArgument.player())
+                    .then(argument("amount", LongArgumentType.longArg(1))
+                        .executes(context -> {
+                            ServerPlayer sender = context.getSource().getPlayerOrException();
+                            ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                            long amount = LongArgumentType.getLong(context, "amount");
+                            if (sender.getUUID().equals(target.getUUID())) {
+                                context.getSource().sendFailure(Component.literal("You cannot pay yourself."));
+                                return 0;
+                            }
+                            if (!ECONOMY.transfer(sender.getUUID(), target.getUUID(), amount)) {
+                                context.getSource().sendFailure(Component.literal("Insufficient funds."));
+                                return 0;
+                            }
+                            ECONOMY.save(context.getSource().getServer());
+                            sender.sendSystemMessage(Component.literal("You paid " + target.getGameProfile().name() + " $" + amount + "."));
+                            target.sendSystemMessage(Component.literal(sender.getGameProfile().name() + " paid you $" + amount + "."));
+                            return 1;
+                        }))));
+
+        dispatcher.register(Commands.literal("shop")
+            .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .then(Commands.argument("amount", LongArgumentType.longArg(1, 64)).executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    String rawId = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item").toLowerCase(java.util.Locale.ROOT);
+                    if (!rawId.contains(":")) rawId = "minecraft:" + rawId;
+                    net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(rawId);
+                    if (itemId == null) {
+                        context.getSource().sendFailure(Component.literal("Invalid item ID."));
+                        return 0;
+                    }
+                    net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(itemId);
+                    if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                        context.getSource().sendFailure(Component.literal("Unknown item."));
+                        return 0;
+                    }
+                    int amount = (int) LongArgumentType.getLong(context, "amount");
+                    long price = priceFor(itemId.toString()) * amount;
+                    if (player.getInventory().getFreeSlot() < 0) {
+                        context.getSource().sendFailure(Component.literal("Free an inventory slot before buying."));
+                        return 0;
+                    }
+                    if (!ECONOMY.withdraw(player.getUUID(), price)) {
+                        context.getSource().sendFailure(Component.literal("Insufficient funds. Item costs $" + price + "."));
+                        return 0;
+                    }
+                    net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item, amount);
+                    if (!player.getInventory().add(stack)) {
+                        ECONOMY.deposit(player.getUUID(), price);
+                        context.getSource().sendFailure(Component.literal("Could not add the item to your inventory."));
+                        return 0;
+                    }
+                    ECONOMY.save(context.getSource().getServer());
+                    context.getSource().sendSuccess(() -> Component.literal("Bought " + amount + " " + itemId + " for $" + price + "."), false);
+                    return 1;
+                }))));
+        dispatcher.register(Commands.literal("sell")
+            .executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                net.minecraft.world.item.ItemStack stack = player.getMainHandItem();
+                if (stack.isEmpty()) {
+                    context.getSource().sendFailure(Component.literal("Hold an item to sell."));
+                    return 0;
+                }
+                String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+                int amount = stack.getCount();
+                long payout = Math.max(1L, priceFor(itemId) / 4L) * amount;
+                stack.shrink(amount);
+                player.getInventory().setItem(player.getInventory().getSelectedSlot(), stack.isEmpty() ? net.minecraft.world.item.ItemStack.EMPTY : stack);
+                ECONOMY.deposit(player.getUUID(), payout);
+                ECONOMY.save(context.getSource().getServer());
+                context.getSource().sendSuccess(() -> Component.literal("Sold " + amount + " " + itemId + " for $" + payout + "."), false);
+                return 1;
+            }));
+            dispatcher.register(literal("blemm")
+                .then(literal("balance").executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
+                    return 1;
+                })));
+        dispatcher.register(Commands.literal("ah")
+            .then(Commands.literal("list").executes(context -> {
+                var listings = AuctionStore.listings();
+                if (listings.isEmpty()) {
+                    context.getSource().sendSuccess(() -> Component.literal("The auction house is empty."), false);
+                    return 1;
+                }
+                for (AuctionStore.Listing listing : listings) {
+                    context.getSource().sendSuccess(() -> Component.literal("#" + listing.id() + " " + listing.amount()
+                        + "x " + listing.itemId() + " — $" + listing.price() + " (seller " + listing.seller() + ")"), false);
+                }
+                return 1;
+            }))
+            .then(Commands.literal("sell")
+                .then(Commands.argument("price", LongArgumentType.longArg(1)).executes(context -> {
+                    ServerPlayer seller = context.getSource().getPlayerOrException();
+                    long price = LongArgumentType.getLong(context, "price");
+                    net.minecraft.world.item.ItemStack held = seller.getMainHandItem();
+                    if (held.isEmpty()) {
+                        context.getSource().sendFailure(Component.literal("Hold an item to list."));
+                        return 0;
+                    }
+                    String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
+                    int amount = held.getCount();
+                    AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, itemId, amount, context.getSource().getServer());
+                    seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
+                    seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
+                    return 1;
+                })))
+            .then(Commands.literal("buy")
+                .then(Commands.argument("id", LongArgumentType.longArg(1)).executes(context -> {
+                    ServerPlayer buyer = context.getSource().getPlayerOrException();
+                    long id = LongArgumentType.getLong(context, "id");
+                    AuctionStore.Listing listing = AuctionStore.get(id);
+                    if (listing == null) {
+                        context.getSource().sendFailure(Component.literal("Auction listing not found."));
+                        return 0;
+                    }
+                    if (listing.seller().equals(buyer.getUUID())) {
+                        context.getSource().sendFailure(Component.literal("You cannot buy your own listing."));
+                        return 0;
+                    }
+                    if (buyer.getInventory().getFreeSlot() < 0) {
+                        context.getSource().sendFailure(Component.literal("Free an inventory slot before buying."));
+                        return 0;
+                    }
+                    net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(listing.itemId());
+                    net.minecraft.world.item.Item item = itemId == null ? null : net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(itemId);
+                    if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                        context.getSource().sendFailure(Component.literal("The listed item is no longer available."));
+                        return 0;
+                    }
+                    if (!ECONOMY.withdraw(buyer.getUUID(), listing.price())) {
+                        context.getSource().sendFailure(Component.literal("Insufficient funds. This listing costs $" + listing.price() + "."));
+                        return 0;
+                    }
+                    AuctionStore.remove(id, context.getSource().getServer());
+                    net.minecraft.world.item.ItemStack bought = new net.minecraft.world.item.ItemStack(item, listing.amount());
+                    if (!buyer.getInventory().add(bought)) {
+                        ECONOMY.deposit(buyer.getUUID(), listing.price());
+                        AuctionStore.create(listing.seller(), listing.price(), listing.itemId(), listing.amount(), context.getSource().getServer());
+                        ECONOMY.save(context.getSource().getServer());
+                        context.getSource().sendFailure(Component.literal("Could not add the item to your inventory; purchase refunded."));
+                        return 0;
+                    }
+                    ECONOMY.deposit(listing.seller(), listing.price());
+                    ECONOMY.save(context.getSource().getServer());
+                    ServerPlayer seller = context.getSource().getServer().getPlayerList().getPlayer(listing.seller());
+                    if (seller != null) seller.sendSystemMessage(Component.literal("Your auction #" + id + " sold for $" + listing.price() + "."));
+                    context.getSource().sendSuccess(() -> Component.literal("Bought auction #" + id + " for $" + listing.price() + "."), false);
+                    return 1;
+                })))
+            .then(Commands.literal("cancel")
+                .then(Commands.argument("id", LongArgumentType.longArg(1)).executes(context -> {
+                    ServerPlayer actor = context.getSource().getPlayerOrException();
+                    long id = LongArgumentType.getLong(context, "id");
+                    AuctionStore.Listing listing = AuctionStore.get(id);
+                    if (listing == null || (!listing.seller().equals(actor.getUUID())
+                        && !context.getSource().getServer().getPlayerList().isOp(actor.nameAndId()))) {
+                        context.getSource().sendFailure(Component.literal("Listing not found or you do not own it."));
+                        return 0;
+                    }
+                    ServerPlayer seller = context.getSource().getServer().getPlayerList().getPlayer(listing.seller());
+                    if (seller == null || seller.getInventory().getFreeSlot() < 0) {
+                        context.getSource().sendFailure(Component.literal("The seller must be online with a free inventory slot to cancel this listing."));
+                        return 0;
+                    }
+                    net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(listing.itemId());
+                    net.minecraft.world.item.Item item = itemId == null ? null : net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(itemId);
+                    if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                        context.getSource().sendFailure(Component.literal("The listed item is no longer available."));
+                        return 0;
+                    }
+                    AuctionStore.remove(id, context.getSource().getServer());
+                    seller.getInventory().add(new net.minecraft.world.item.ItemStack(item, listing.amount()));
+                    seller.sendSystemMessage(Component.literal("Auction #" + id + " was cancelled and returned."));
+                    return 1;
+                }))));
+            LocationCommands.register(dispatcher);
+        });
+    }
+
+    private static long priceFor(String itemId) {
+        return switch (itemId) {
+            case "minecraft:diamond" -> 250L;
+            case "minecraft:iron_ingot" -> 40L;
+            case "minecraft:gold_ingot" -> 55L;
+            case "minecraft:emerald" -> 150L;
+            case "minecraft:bread" -> 8L;
+            case "minecraft:cooked_beef" -> 18L;
+            case "minecraft:obsidian" -> 90L;
+            case "minecraft:ender_pearl" -> 45L;
+            default -> 10L;
+        };
+    }
+
+    private static final class EconomyStore {
+        private final Map<UUID, Long> balances = new HashMap<>();
+        private Path file;
+
+        long balance(UUID player) { return balances.getOrDefault(player, 100L); }
+        void setBalance(UUID player, long amount) { balances.put(player, amount); }
+        boolean withdraw(UUID player, long amount) {
+            long current = balance(player);
+            if (amount < 0 || current < amount) return false;
+            balances.put(player, current - amount);
+            return true;
+        }
+
+        void deposit(UUID player, long amount) {
+            if (amount < 0 || Long.MAX_VALUE - balance(player) < amount) return;
+            balances.put(player, balance(player) + amount);
+        }
+
+        boolean transfer(UUID from, UUID to, long amount) {
+            long current = balance(from);
+            if (amount <= 0 || current < amount || Long.MAX_VALUE - balance(to) < amount) return false;
+            balances.put(from, current - amount);
+            balances.put(to, balance(to) + amount);
+            return true;
+        }
+
+        void load(MinecraftServer server) {
+            file = server.getServerDirectory().resolve("blemmessentials").resolve("balances.tsv");
+            if (!Files.exists(file)) return;
+            try {
+                for (String line : Files.readAllLines(file)) {
+                    String[] parts = line.split("\\t", 2);
+                    if (parts.length != 2) continue;
+                    try {
+                        UUID id = UUID.fromString(parts[0]);
+                        long value = Long.parseLong(parts[1]);
+                        if (value >= 0) balances.put(id, value);
+                    } catch (IllegalArgumentException ignored) { }
+                }
+            } catch (IOException exception) {
+                throw new IllegalStateException("Could not load BlemmEssentials balances", exception);
+            }
+        }
+
+        void save(MinecraftServer server) {
+            Path destination = file != null ? file : server.getServerDirectory().resolve("blemmessentials").resolve("balances.tsv");
+            try {
+                Files.createDirectories(destination.getParent());
+                Path temporary = destination.resolveSibling(destination.getFileName() + ".tmp");
+                StringBuilder content = new StringBuilder();
+                balances.forEach((uuid, amount) -> content.append(uuid).append('\t').append(amount).append('\n'));
+                Files.writeString(temporary, content);
+                try {
+                    Files.move(temporary, destination, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+                } catch (IOException ignored) {
+                    Files.move(temporary, destination, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+                file = destination;
+            } catch (IOException exception) {
+                throw new IllegalStateException("Could not save BlemmEssentials balances", exception);
+            }
+        }
+    }
+}
