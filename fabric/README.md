@@ -24,3 +24,8 @@ Build with Java 25: `gradle -p fabric build`.
 ## Configurable shop pricing
 
 After first start, edit `blemmessentials/shop-prices.properties` in the server directory. Use `/shopprice <item>` to inspect prices and `/shopprices` to see configuration keys. Category defaults use `default.<category>.buy` / `default.<category>.sell`; item overrides use `item.<namespace:id>.buy` / `item.<namespace:id>.sell`. Set an item's sell price to `0` to disable selling it.
+
+
+### Discord auction announcements on mod loaders
+
+The mod ports can announce new auctions without DiscordSRV by using a Discord webhook. After the first server start, open `blemmessentials/discord.properties` and set `webhook-url` to a Discord webhook URL. Leave it empty to disable announcements. Webhook requests run asynchronously; Paper continues to support its existing DiscordSRV integration.
