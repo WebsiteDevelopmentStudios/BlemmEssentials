@@ -87,7 +87,7 @@ public final class BlemmEssentialsForge {
         private final Map<UUID, Long> balances = new HashMap<>();
         private Path file;
 
-        long balance(UUID id) { return balances.getOrDefault(id, 0L); }
+        long balance(UUID id) { return balances.getOrDefault(id, 100L); }
         void setBalance(UUID id, long amount) { balances.put(id, amount); }
 
         boolean transfer(UUID from, UUID to, long amount) {
