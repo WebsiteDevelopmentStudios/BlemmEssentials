@@ -24,6 +24,11 @@ The mod ports are a functional first pass, **not exact feature parity**. The Pap
 - `/shopprices` — show price configuration keys and supported categories.
 
 Mod-loader shop prices are editable in `blemmessentials/shop-prices.properties` after the first server start. Configure category defaults with `default.<category>.buy` and `default.<category>.sell`, or override an item with `item.<namespace:id>.buy` and `item.<namespace:id>.sell`. A sell price of `0` disables selling that item.
+
+### Discord auction announcements on mod loaders
+
+The mod ports can announce new auctions without DiscordSRV by using a Discord webhook. After the first server start, open `blemmessentials/discord.properties` and set `webhook-url` to a Discord webhook URL. Leave it empty to disable announcements. Webhook requests run asynchronously; Paper continues to support its existing DiscordSRV integration.
+
 - `/sell` — sell the stack in your main hand.
 - `/ah list` — list auctions.
 - `/ah sell <price>` — list the held stack.
