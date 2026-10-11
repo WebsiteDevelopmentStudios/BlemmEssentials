@@ -38,7 +38,6 @@ public final class BlemmEssentialsNeoForge {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem event) -> {
             if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
             if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
-            event.setCanceled(true);
             dev.blemm.essentials.menu.CompassMenu.open(player);
         });
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); dev.blemm.essentials.shop.ShopPrices.load(event.getServer()); dev.blemm.essentials.integrations.DiscordWebhook.load(event.getServer()); dev.blemm.essentials.commands.CommandPolicy.load(event.getServer()); });
