@@ -77,6 +77,21 @@ public final class BlemmEssentialsForge {
                     target.sendSystemMessage(Component.literal(sender.getGameProfile().name() + " paid you $" + amount + "."));
                     return 1;
                 }))));
+            dispatcher.register(Commands.literal("shopprice")
+                .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+                    String itemId = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item").toLowerCase(java.util.Locale.ROOT);
+                    if (!itemId.contains(":")) itemId = "minecraft:" + itemId;
+                    context.getSource().sendSuccess(() -> Component.literal(itemId + " — buy: $" +
+                        dev.blemm.essentials.shop.ShopPrices.buy(itemId) + ", sell: $" +
+                        dev.blemm.essentials.shop.ShopPrices.sell(itemId) +
+                        " (edit blemmessentials/shop-prices.properties to customize prices)"), false);
+                    return 1;
+                })));
+            dispatcher.register(Commands.literal("shopprices").executes(context -> {
+                context.getSource().sendSuccess(() -> Component.literal("Shop prices are editable in blemmessentials/shop-prices.properties. " +
+                    "Keys use default.<category>.buy/sell or item.<namespace:id>.buy/sell. Categories: building_blocks, natural, ores_minerals, tools, combat, food, farming, redstone, decoration, brewing, transport, miscellaneous."), false);
+                return 1;
+            }));
         dispatcher.register(Commands.literal("shop")
             .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word())
                 .then(Commands.argument("amount", LongArgumentType.longArg(1, 64)).executes(context -> {
