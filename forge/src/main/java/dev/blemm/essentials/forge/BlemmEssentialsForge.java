@@ -218,6 +218,7 @@ public final class BlemmEssentialsForge {
                     String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
                     int amount = held.getCount();
                     AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, itemId, amount, context.getSource().getServer());
+                    dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller.getGameProfile().name(), itemId, amount, price);
                     seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
                     seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
                     return 1;
@@ -295,7 +296,7 @@ public final class BlemmEssentialsForge {
     }
 
     @SubscribeEvent
-    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); dev.blemm.essentials.shop.ShopPrices.load(event.getServer()); }
+    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); dev.blemm.essentials.shop.ShopPrices.load(event.getServer()); dev.blemm.essentials.integrations.DiscordWebhook.load(event.getServer()); }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); FriendStore.save(event.getServer()); }
