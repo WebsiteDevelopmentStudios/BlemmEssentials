@@ -16,7 +16,7 @@ Native NeoForge server mod targeting Minecraft 26.3 and Java 25.
 
 Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
-The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, or custom item metadata in auction listings.
+The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, or full item stack metadata in auction listings.
 
 Build with Java 25: `gradle -p neoforge build`.
 
@@ -37,3 +37,6 @@ After first start, edit `blemmessentials/disabled-commands.properties`. Use dime
 
 
 `/shop` opens the category-based vanilla chest GUI. Left-click buys one item; right-click buys a stack. The command form `/shop <item> <amount>` remains available.
+
+
+Auction listings now serialize the complete item stack through Minecraft's registry-aware item codec, preserving custom names, lore, enchantments, and other item components across server restarts. Existing listings from older versions remain readable and fall back to plain item stacks.
