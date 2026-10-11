@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import dev.blemm.essentials.locations.LocationCommands;
 import dev.blemm.essentials.auction.AuctionStore;
 import dev.blemm.essentials.ranks.RankStore;
+import dev.blemm.essentials.friends.FriendStore;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -31,8 +32,8 @@ public final class BlemmEssentialsNeoForge {
 
     public BlemmEssentialsNeoForge(IEventBus modEventBus) {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
-        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); });
-        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); FriendStore.save(event.getServer()); });
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
