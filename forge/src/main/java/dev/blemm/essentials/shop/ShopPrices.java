@@ -60,21 +60,21 @@ public final class ShopPrices {
         PRICES.setProperty("default.miscellaneous.buy", "10");
         PRICES.setProperty("default.miscellaneous.sell", "2");
         PRICES.setProperty("item.minecraft:diamond.buy", "250");
-        PRICES.setProperty("item.minecraft:diamond.sell", "50");
+        PRICES.setProperty("item.minecraft:diamond.sell", "100");
         PRICES.setProperty("item.minecraft:iron_ingot.buy", "40");
-        PRICES.setProperty("item.minecraft:iron_ingot.sell", "8");
+        PRICES.setProperty("item.minecraft:iron_ingot.sell", "15");
         PRICES.setProperty("item.minecraft:gold_ingot.buy", "55");
-        PRICES.setProperty("item.minecraft:gold_ingot.sell", "11");
+        PRICES.setProperty("item.minecraft:gold_ingot.sell", "20");
         PRICES.setProperty("item.minecraft:emerald.buy", "150");
-        PRICES.setProperty("item.minecraft:emerald.sell", "30");
+        PRICES.setProperty("item.minecraft:emerald.sell", "60");
         PRICES.setProperty("item.minecraft:bread.buy", "8");
-        PRICES.setProperty("item.minecraft:bread.sell", "2");
+        PRICES.setProperty("item.minecraft:bread.sell", "3");
         PRICES.setProperty("item.minecraft:cooked_beef.buy", "18");
-        PRICES.setProperty("item.minecraft:cooked_beef.sell", "4");
+        PRICES.setProperty("item.minecraft:cooked_beef.sell", "7");
         PRICES.setProperty("item.minecraft:obsidian.buy", "90");
-        PRICES.setProperty("item.minecraft:obsidian.sell", "18");
+        PRICES.setProperty("item.minecraft:obsidian.sell", "30");
         PRICES.setProperty("item.minecraft:ender_pearl.buy", "45");
-        PRICES.setProperty("item.minecraft:ender_pearl.sell", "9");
+        PRICES.setProperty("item.minecraft:ender_pearl.sell", "15");
     }
 
     public static synchronized void save() {
