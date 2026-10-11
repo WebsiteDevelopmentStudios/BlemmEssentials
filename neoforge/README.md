@@ -29,3 +29,8 @@ After first start, edit `blemmessentials/shop-prices.properties` in the server d
 ### Discord auction announcements on mod loaders
 
 The mod ports can announce new auctions without DiscordSRV by using a Discord webhook. After the first server start, open `blemmessentials/discord.properties` and set `webhook-url` to a Discord webhook URL. Leave it empty to disable announcements. Webhook requests run asynchronously; Paper continues to support its existing DiscordSRV integration.
+
+
+### Per-dimension command disabling on mod loaders
+
+After first start, edit `blemmessentials/disabled-commands.properties`. Use dimension IDs as keys, such as `minecraft:the_end=rtp,home,sethome`, or `*=rtp` to disable a command in every dimension. List command names separated by commas; leave a value empty to allow all BlemmEssentials commands in that dimension.
