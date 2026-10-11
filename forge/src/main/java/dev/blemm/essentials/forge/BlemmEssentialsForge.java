@@ -128,7 +128,12 @@ public final class BlemmEssentialsForge {
                 }
                 String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
                 int amount = stack.getCount();
-                long payout = Math.max(1L, priceFor(itemId) / 4L) * amount;
+                long unitSellPrice = dev.blemm.essentials.shop.ShopPrices.sell(itemId);
+                if (unitSellPrice <= 0) {
+                    context.getSource().sendFailure(Component.literal("This item cannot be sold."));
+                    return 0;
+                }
+                long payout = unitSellPrice * amount;
                 stack.shrink(amount);
                 player.getInventory().setItem(player.getInventory().getSelectedSlot(), stack.isEmpty() ? net.minecraft.world.item.ItemStack.EMPTY : stack);
                 ECONOMY.deposit(player.getUUID(), payout);
@@ -268,23 +273,13 @@ public final class BlemmEssentialsForge {
     }
 
     @SubscribeEvent
-    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); }
+    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); dev.blemm.essentials.shop.ShopPrices.load(event.getServer()); }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); FriendStore.save(event.getServer()); }
 
     private static long priceFor(String itemId) {
-        return switch (itemId) {
-            case "minecraft:diamond" -> 250L;
-            case "minecraft:iron_ingot" -> 40L;
-            case "minecraft:gold_ingot" -> 55L;
-            case "minecraft:emerald" -> 150L;
-            case "minecraft:bread" -> 8L;
-            case "minecraft:cooked_beef" -> 18L;
-            case "minecraft:obsidian" -> 90L;
-            case "minecraft:ender_pearl" -> 45L;
-            default -> 10L;
-        };
+        return dev.blemm.essentials.shop.ShopPrices.buy(itemId);
     }
 
     private static final class EconomyStore {
