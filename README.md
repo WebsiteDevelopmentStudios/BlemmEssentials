@@ -11,7 +11,7 @@ BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the ref
 | Forge | `forge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 | NeoForge | `neoforge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 
-The mod ports are a functional first pass, **not exact feature parity**. The Paper category GUI, selling rules and all category-specific pricing, DiscordSRV announcements, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, per-world command disabling, and Paper-specific menu/compass behavior are not ported to the mod loaders. The loader shop and auction house are command-based, rank prefixes use vanilla scoreboard teams, and auction listings preserve item type and stack count but not custom item metadata.
+The mod ports are a functional first pass, **not exact feature parity**. The Paper inventory GUI, Paper's exact selling rules and category assignments, DiscordSRV announcements, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, per-world command disabling, and Paper-specific menu/compass behavior are not ported to the mod loaders. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop and auction house are command-based, rank prefixes use vanilla scoreboard teams, and auction listings preserve item type and stack count but not custom item metadata.
 
 ## Commands in the mod ports
 
