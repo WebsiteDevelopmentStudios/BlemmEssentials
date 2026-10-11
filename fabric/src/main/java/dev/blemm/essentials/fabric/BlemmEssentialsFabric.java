@@ -33,11 +33,11 @@ public final class BlemmEssentialsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> dev.blemm.essentials.ranks.RankPresentation.apply(handler.player));
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); });
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); dev.blemm.essentials.commands.CommandPolicy.load(server); });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(literal("balance")
+            dispatcher.register(literal("balance").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "balance"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     long balance = ECONOMY.balance(player.getUUID());
@@ -45,7 +45,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     return 1;
                 }));
 
-            dispatcher.register(literal("money")
+            dispatcher.register(literal("money").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "money"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
@@ -64,7 +64,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                             return 1;
                         }))));
 
-            dispatcher.register(literal("pay")
+            dispatcher.register(literal("pay").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "pay"))
                 .then(argument("player", EntityArgument.player())
                     .then(argument("amount", LongArgumentType.longArg(1))
                         .executes(context -> {
@@ -85,7 +85,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                             return 1;
                         }))));
 
-            dispatcher.register(Commands.literal("shopprice")
+            dispatcher.register(Commands.literal("shopprice").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "shopprice"))
                 .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
                     String rawItemId = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item").toLowerCase(java.util.Locale.ROOT);
                     final String itemId = rawItemId.contains(":") ? rawItemId : "minecraft:" + rawItemId;
@@ -95,12 +95,12 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                         " (edit blemmessentials/shop-prices.properties to customize prices)"), false);
                     return 1;
                 })));
-            dispatcher.register(Commands.literal("shopprices").executes(context -> {
+            dispatcher.register(Commands.literal("shopprices").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "shopprices")).executes(context -> {
                 context.getSource().sendSuccess(() -> Component.literal("Shop prices are editable in blemmessentials/shop-prices.properties. " +
                     "Keys use default.<category>.buy/sell or item.<namespace:id>.buy/sell. Categories: building_blocks, natural, ores_minerals, tools, combat, food, farming, redstone, decoration, brewing, transport, miscellaneous."), false);
                 return 1;
             }));
-        dispatcher.register(Commands.literal("shop")
+        dispatcher.register(Commands.literal("shop").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "shop"))
             .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word())
                 .then(Commands.argument("amount", LongArgumentType.longArg(1, 64)).executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
@@ -141,7 +141,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     context.getSource().sendSuccess(() -> Component.literal("Bought " + amount + " " + itemId + " for $" + price + "."), false);
                     return 1;
                 }))));
-        dispatcher.register(Commands.literal("sell")
+        dispatcher.register(Commands.literal("sell").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "sell"))
             .executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 net.minecraft.world.item.ItemStack stack = player.getMainHandItem();
@@ -164,13 +164,13 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                 context.getSource().sendSuccess(() -> Component.literal("Sold " + amount + " " + itemId + " for $" + payout + "."), false);
                 return 1;
             }));
-            dispatcher.register(literal("blemm")
+            dispatcher.register(literal("blemm").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "blemm"))
                 .then(literal("balance").executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
                     return 1;
                 })));
-            dispatcher.register(Commands.literal("rank")
+            dispatcher.register(Commands.literal("rank").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "rank"))
             .executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 context.getSource().sendSuccess(() -> Component.literal("Your rank: " + RankStore.get(player.getUUID())), false);
@@ -197,11 +197,11 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                 context.getSource().sendSuccess(() -> Component.literal(target.getGameProfile().name() + "'s rank: " + RankStore.get(target.getUUID())), false);
                 return 1;
             })));
-        dispatcher.register(Commands.literal("help-").executes(context -> {
+        dispatcher.register(Commands.literal("help-").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "help-")).executes(context -> {
             context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /lobby, /setlobby, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
             return 1;
         }));
-        dispatcher.register(Commands.literal("ah")
+        dispatcher.register(Commands.literal("ah").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "ah"))
             .then(Commands.literal("list").executes(context -> {
                 var listings = AuctionStore.listings();
                 if (listings.isEmpty()) {
