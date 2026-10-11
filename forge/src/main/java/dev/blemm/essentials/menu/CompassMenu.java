@@ -46,6 +46,10 @@ public final class CompassMenu {
     }
 
     public static void open(ServerPlayer player) {
+        if (dev.blemm.essentials.commands.CommandPolicy.disabled(player.createCommandSourceStack(), "compass")) {
+            player.sendSystemMessage(Component.literal("The BlemmEssentials compass is disabled in this dimension."));
+            return;
+        }
         player.openMenu(new SimpleMenuProvider((id, inventory, p) -> new UtilityMenu(id, inventory),
             Component.literal("BlemmEssentials")));
     }
