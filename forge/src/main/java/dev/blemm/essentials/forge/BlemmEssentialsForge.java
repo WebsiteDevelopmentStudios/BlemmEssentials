@@ -32,6 +32,9 @@ public final class BlemmEssentialsForge {
     public static final String MOD_ID = "blemmessentials";
     private static final EconomyStore ECONOMY = new EconomyStore();
 
+    /** Read-only balance accessor for optional mod integrations. */
+    public static long balanceFor(UUID player) { return ECONOMY.balance(player); }
+
     public BlemmEssentialsForge() {
         MinecraftForge.EVENT_BUS.register(this);
     }

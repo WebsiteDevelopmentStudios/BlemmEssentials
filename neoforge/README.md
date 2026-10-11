@@ -16,7 +16,7 @@ Native NeoForge server mod targeting Minecraft 26.3 and Java 25.
 
 Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
-The NeoForge port uses native vanilla GUIs. It is not a Bukkit plugin and cannot load DiscordSRV, PlaceholderAPI, Geyser-Spigot/Floodgate plugins, or Multiverse-Core directly. Discord auction announcements use the configurable webhook; native cross-dimension warps work when the target dimension is loaded. No standard compatible third-party placeholder API is currently wired in.
+The NeoForge port uses native vanilla GUIs. It is not a Bukkit plugin and cannot load DiscordSRV, PlaceholderAPI, Geyser-Spigot/Floodgate plugins, or Multiverse-Core directly. Discord auction announcements use the configurable webhook; native cross-dimension warps work when the target dimension is loaded. A dependency-free placeholder resolver is available to other NeoForge mods through `dev.blemm.essentials.integrations.PlaceholderValues`. It supports `%blemm_balance%`, `%blemm_rank%`, `%blemm_rank_prefix%`, `%blemm_world%`, `%blemm_is_bedrock%`, `%blemm_discord_avatar%`, `%blemm_player%`, and `%blemm_uuid%`. Call `PlaceholderValues.apply(ServerPlayer, text)` to replace tokens, or `PlaceholderValues.resolve(ServerPlayer, name)` for one value. This is a native mod integration API, not a drop-in PlaceholderAPI expansion.
 
 Build with Java 25: `gradle -p neoforge build`.
 
