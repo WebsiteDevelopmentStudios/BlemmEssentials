@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import dev.blemm.essentials.locations.LocationCommands;
 import dev.blemm.essentials.auction.AuctionStore;
 import dev.blemm.essentials.ranks.RankStore;
+import dev.blemm.essentials.friends.FriendStore;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -262,10 +263,10 @@ public final class BlemmEssentialsForge {
     }
 
     @SubscribeEvent
-    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); }
+    public void onServerStarted(ServerStartedEvent event) { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); }
 
     @SubscribeEvent
-    public void onServerStopping(ServerStoppingEvent event) { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); }
+    public void onServerStopping(ServerStoppingEvent event) { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); AuctionStore.save(event.getServer()); RankStore.save(event.getServer()); FriendStore.save(event.getServer()); }
 
     private static long priceFor(String itemId) {
         return switch (itemId) {
