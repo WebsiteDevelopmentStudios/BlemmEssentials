@@ -19,3 +19,8 @@ Operator-only commands require operator permission. Home, warp, lobby, economy, 
 The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, rank chat/tab prefixes, or custom item metadata in auction listings.
 
 Build with Java 25: `gradle -p fabric build`.
+
+
+## Configurable shop pricing
+
+After first start, edit `blemmessentials/shop-prices.properties` in the server directory. Use `/shopprice <item>` to inspect prices and `/shopprices` to see configuration keys. Category defaults use `default.<category>.buy` / `default.<category>.sell`; item overrides use `item.<namespace:id>.buy` / `item.<namespace:id>.sell`. Set an item's sell price to `0` to disable selling it.
