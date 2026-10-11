@@ -331,8 +331,8 @@ public final class LocationCommands {
             target.sendSystemMessage(Component.literal("Teleport request denied."));
             return 1;
         }
-        ServerPlayer moving = request.teleportHere() ? requester : target;
-        ServerPlayer destination = request.teleportHere() ? target : requester;
+        ServerPlayer moving = request.teleportHere() ? target : requester;
+        ServerPlayer destination = request.teleportHere() ? requester : target;
         if (!(destination.level() instanceof ServerLevel destinationLevel)) {
             source.sendFailure(Component.literal("The destination world is unavailable."));
             return 0;
