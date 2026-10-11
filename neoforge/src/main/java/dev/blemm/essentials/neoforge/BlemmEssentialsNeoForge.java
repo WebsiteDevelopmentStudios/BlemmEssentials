@@ -30,6 +30,9 @@ public final class BlemmEssentialsNeoForge {
     public static final String MOD_ID = "blemmessentials";
     private static final EconomyStore ECONOMY = new EconomyStore();
 
+    /** Read-only balance accessor for optional mod integrations. */
+    public static long balanceFor(UUID player) { return ECONOMY.balance(player); }
+
     public BlemmEssentialsNeoForge(IEventBus modEventBus) {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
