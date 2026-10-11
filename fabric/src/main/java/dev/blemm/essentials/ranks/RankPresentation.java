@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 
@@ -12,8 +13,8 @@ public final class RankPresentation {
     private RankPresentation() {}
 
     public static void apply(ServerPlayer player) {
-        MinecraftServer server = player.serverLevel().getServer();
-        if (server == null) return;
+        if (!(player.level() instanceof ServerLevel level)) return;
+        MinecraftServer server = level.getServer();
         Scoreboard scoreboard = server.getScoreboard();
         String rank = RankStore.get(player.getUUID());
         PlayerTeam current = scoreboard.getPlayersTeam(player.getScoreboardName());
