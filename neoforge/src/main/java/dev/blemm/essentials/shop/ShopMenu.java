@@ -80,7 +80,7 @@ public final class ShopMenu extends ChestMenu {
             String id = BuiltInRegistries.ITEM.getKey(item).toString();
             long buy = ShopPrices.buy(id);
             long sell = ShopPrices.sell(id);
-            ItemStack icon = named(new ItemStack(item), item.getName(new ItemStack(item)).getString()
+            ItemStack icon = named(new ItemStack(item), new ItemStack(item).getHoverName().getString()
                 + " — Buy $" + buy + " / Sell $" + sell + " (left-click 1, right-click stack)");
             getSlot(i).set(icon);
         }
