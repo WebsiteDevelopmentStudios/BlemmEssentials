@@ -30,8 +30,8 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); });
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); });
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(literal("balance")
