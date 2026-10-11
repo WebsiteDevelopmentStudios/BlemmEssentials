@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -33,9 +34,11 @@ import static net.minecraft.commands.Commands.literal;
 public final class BlemmEssentialsFabric implements ModInitializer {
     private static final EconomyStore ECONOMY = new EconomyStore();
 
+    public static long balanceFor(UUID player) { return ECONOMY.balance(player); }
+
     @Override
     public void onInitialize() {
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> { dev.blemm.essentials.ranks.RankPresentation.apply(handler.player); dev.blemm.essentials.menu.CompassMenu.onJoin(handler.player); });
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> { dev.blemm.essentials.ranks.RankPresentation.apply(handler.player); dev.blemm.essentials.menu.CompassMenu.onJoin(handler.player); dev.blemm.essentials.integrations.BedrockAvatarLookup.load(handler.player); });
         UseItemCallback.EVENT.register((player, level, hand) -> {
             if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
             ItemStack held = player.getItemInHand(hand);
@@ -43,7 +46,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
             dev.blemm.essentials.menu.CompassMenu.open(serverPlayer);
             return InteractionResult.SUCCESS;
         });
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); dev.blemm.essentials.commands.CommandPolicy.load(server); });
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); dev.blemm.essentials.commands.CommandPolicy.load(server); if (FabricLoader.getInstance().isModLoaded("miniplaceholders")) { try { dev.blemm.essentials.integrations.FabricPlaceholderIntegration.register(); } catch (Throwable error) { System.err.println("[BlemmEssentials] MiniPlaceholders integration failed: " + error.getMessage()); } } });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -237,7 +240,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
                     int amount = held.getCount();
                     AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, held.copy(), context.getSource().getServer());
-                    dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller.getGameProfile().name(), itemId, amount, price);
+                    dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller, itemId, amount, price);
                     seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
                     seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
                     return 1;

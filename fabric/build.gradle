@@ -12,6 +12,9 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    compileOnly "io.github.miniplaceholders:miniplaceholders-api:3.2.0"
+    compileOnly "net.kyori:adventure-api:5.2.0"
+    compileOnly "net.kyori:adventure-text-minimessage:5.2.0"
 }
 
 processResources {

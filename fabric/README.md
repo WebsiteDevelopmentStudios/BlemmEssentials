@@ -16,7 +16,7 @@ Native Fabric server mod targeting Minecraft 26.3 and Java 25.
 
 Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
-The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, or full item stack metadata in auction listings.
+The Fabric port uses native vanilla GUIs and has optional integrations for MiniPlaceholders and Geyser/Floodgate skin lookups. It is not a Bukkit plugin and cannot load DiscordSRV, PlaceholderAPI, or Multiverse-Core directly.
 
 Build with Java 25: `gradle -p fabric build`.
 
@@ -45,3 +45,16 @@ Auction listings now serialize the complete item stack through Minecraft's regis
 ### Menu compass
 
 A BlemmEssentials Compass is added to a player's inventory when they join if they do not already have one. Right-clicking it opens a vanilla utility menu for balance, shop, auctions, homes, warps, friends, and lobby. The compass never teleports the player by itself. The `compass` entry in `disabled-commands.properties` can disable it for a dimension.
+
+
+## Optional integrations
+
+Install MiniPlaceholders 3.2.0 or newer alongside BlemmEssentials to expose these audience placeholders to MiniMessage-compatible mods:
+
+- `<blemm_balance>` — player's balance.
+- `<blemm_rank>` and `<blemm_rank_prefix>` — player's BlemmEssentials rank.
+- `<blemm_world>` — current dimension ID.
+- `<blemm_is_bedrock>` — whether the UUID matches Floodgate's Bedrock UUID format.
+- `<blemm_discord_avatar>` — avatar URL; Bedrock skin lookups use the public Geyser skin API and fall back to a Steve avatar while unavailable.
+
+The Fabric mod cannot load Bukkit plugins such as PlaceholderAPI, DiscordSRV, or Multiverse-Core. Use the existing `blemmessentials/discord.properties` webhook for auction announcements; saved warps support native Minecraft dimensions that are currently loaded.

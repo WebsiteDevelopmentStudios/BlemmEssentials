@@ -227,7 +227,7 @@ public final class BlemmEssentialsForge {
                     String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
                     int amount = held.getCount();
                     AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, held.copy(), context.getSource().getServer());
-                    dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller.getGameProfile().name(), itemId, amount, price);
+                    dev.blemm.essentials.integrations.DiscordWebhook.announceAuction(seller, itemId, amount, price);
                     seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
                     seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
                     return 1;
