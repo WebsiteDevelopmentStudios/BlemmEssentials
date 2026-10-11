@@ -27,7 +27,7 @@ Mod-loader shop prices are editable in `blemmessentials/shop-prices.properties` 
 
 ### Per-dimension command disabling on mod loaders
 
-After first start, edit `blemmessentials/disabled-commands.properties`. Use dimension IDs as keys, such as `minecraft:the_end=rtp,home,sethome`, or `*=rtp` to disable a command in every dimension. List command names separated by commas; leave a value empty to allow all BlemmEssentials commands in that dimension.
+After first start, edit `blemmessentials/disabled-commands.properties`. Use dimension IDs as keys, such as `minecraft_the_end=rtp,home,sethome`, or `*=rtp` to disable a command in every dimension. List command names separated by commas; leave a value empty to allow all BlemmEssentials commands in that dimension.
 
 
 ### Discord auction announcements on mod loaders
