@@ -27,16 +27,18 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 25
 }
 
+def modMetadata = [
+    mod_id: mod_id,
+    mod_name: mod_name,
+    mod_license: mod_license,
+    mod_version: mod_version,
+    neo_version: neo_version,
+    minecraft_version_range: minecraft_version_range
+]
+
 processResources {
-    inputs.properties([
-        mod_id: mod_id,
-        mod_name: mod_name,
-        mod_license: mod_license,
-        mod_version: mod_version,
-        neo_version: neo_version,
-        minecraft_version_range: minecraft_version_range
-    ])
+    inputs.properties(modMetadata)
     filesMatching('META-INF/neoforge.mods.toml') {
-        expand inputs.properties
+        expand modMetadata
     }
 }
