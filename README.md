@@ -11,7 +11,7 @@ BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the ref
 | Forge | `forge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 | NeoForge | `neoforge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 
-The mod ports are a functional first pass, **not exact feature parity**. Paper's exact shop GUI flows and selling rules/category assignments, DiscordSRV itself, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, and Paper-specific menu/compass behavior are not ported to the mod loaders. The mod ports offer an optional Discord webhook as an alternative for auction announcements. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop has a native vanilla chest GUI and command access; the auction house is command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings now persist the complete item stack, including custom components, names, lore, and enchantments.
+The mod ports are a functional first pass, **not exact feature parity**. Paper's exact shop GUI flows and selling rules/category assignments, DiscordSRV itself, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, and Paper's exact compass-menu layout and settings are not ported to the mod loaders. The mod ports offer an optional Discord webhook as an alternative for auction announcements. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop has a native vanilla chest GUI and command access; the auction house is command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings now persist the complete item stack, including custom components, names, lore, and enchantments.
 
 ## Commands in the mod ports
 
@@ -25,6 +25,11 @@ The mod ports are a functional first pass, **not exact feature parity**. Paper's
 - `/shopprices` — show price configuration keys and supported categories.
 
 Mod-loader shop prices are editable in `blemmessentials/shop-prices.properties` after the first server start. Configure category defaults with `default.<category>.buy` and `default.<category>.sell`, or override an item with `item.<namespace:id>.buy` and `item.<namespace:id>.sell`. A sell price of `0` disables selling that item.
+
+### Menu compass
+
+A BlemmEssentials Compass is added to a player's inventory when they join if they do not already have one. Right-clicking it opens a vanilla utility menu for balance, shop, auctions, homes, warps, friends, and lobby. The compass never teleports the player by itself. The `compass` entry in `disabled-commands.properties` can disable it for a dimension.
+
 
 ### Per-dimension command disabling on mod loaders
 
