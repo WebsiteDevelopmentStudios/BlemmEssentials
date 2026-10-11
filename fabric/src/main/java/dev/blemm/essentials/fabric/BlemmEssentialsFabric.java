@@ -11,6 +11,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import dev.blemm.essentials.locations.LocationCommands;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,8 +28,8 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> ECONOMY.load(server));
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> ECONOMY.save(server));
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(literal("balance")
@@ -85,6 +86,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
                     return 1;
                 })));
+            LocationCommands.register(dispatcher);
         });
     }
 
