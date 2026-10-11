@@ -6,6 +6,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
@@ -13,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class LocationCommands {
     private static final Properties DATA = new Properties();
@@ -130,6 +133,32 @@ public final class LocationCommands {
             String encoded;
             synchronized (LocationCommands.class) { encoded = DATA.getProperty("lobby"); }
             return teleport(context.getSource(), encoded, "Lobby location has not been set.");
+        }));
+
+        dispatcher.register(Commands.literal("rtp").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            if (!(player.level() instanceof ServerLevel level)) {
+                context.getSource().sendFailure(Component.literal("Random teleport is unavailable in this world."));
+                return 0;
+            }
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            BlockPos spawn = level.getSharedSpawnPos();
+            for (int attempt = 0; attempt < 32; attempt++) {
+                int radius = random.nextInt(100, 5001);
+                double angle = random.nextDouble(0, Math.PI * 2);
+                int x = spawn.getX() + (int) Math.round(Math.cos(angle) * radius);
+                int z = spawn.getZ() + (int) Math.round(Math.sin(angle) * radius);
+                int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                if (y <= level.getMinY() || y >= level.getMaxY() - 1) continue;
+                BlockPos feet = new BlockPos(x, y, z);
+                if (!level.getBlockState(feet).isAir() || !level.getBlockState(feet.above()).isAir()
+                    || level.getBlockState(feet.below()).isAir()) continue;
+                player.teleportTo(x + 0.5, y, z + 0.5);
+                player.sendSystemMessage(Component.literal("Randomly teleported."));
+                return 1;
+            }
+            context.getSource().sendFailure(Component.literal("Could not find a safe location. Try again."));
+            return 0;
         }));
 
         dispatcher.register(Commands.literal("tpa")
