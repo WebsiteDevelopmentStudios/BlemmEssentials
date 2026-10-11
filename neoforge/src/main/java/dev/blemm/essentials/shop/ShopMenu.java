@@ -8,7 +8,7 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -90,9 +90,9 @@ public final class ShopMenu extends ChestMenu {
     }
 
     @Override
-    public void clicked(int slotId, int button, ClickType clickType, Player player) {
-        if (!(player instanceof ServerPlayer serverPlayer) || clickType == ClickType.QUICK_MOVE
-            || clickType == ClickType.THROW || clickType == ClickType.SWAP || clickType == ClickType.CLONE) return;
+    public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer) || clickType == ContainerInput.QUICK_MOVE
+            || clickType == ContainerInput.THROW || clickType == ContainerInput.SWAP || clickType == ContainerInput.CLONE) return;
         if (slotId < 0 || slotId >= 54) return;
         if (category == null) {
             int index = slotId - 9;
