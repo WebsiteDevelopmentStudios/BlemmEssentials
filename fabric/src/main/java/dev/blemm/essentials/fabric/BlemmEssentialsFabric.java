@@ -12,6 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import dev.blemm.essentials.locations.LocationCommands;
+import dev.blemm.essentials.auction.AuctionStore;
+import dev.blemm.essentials.ranks.RankStore;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -140,7 +142,135 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
                     return 1;
                 })));
-            LocationCommands.register(dispatcher);
+            dispatcher.register(Commands.literal("rank")
+            .executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                context.getSource().sendSuccess(() -> Component.literal("Your rank: " + RankStore.get(player.getUUID())), false);
+                return 1;
+            })
+            .then(Commands.literal("set")
+                .requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer operator
+                    && source.getServer().getPlayerList().isOp(operator.nameAndId())))
+                .then(Commands.argument("player", EntityArgument.player())
+                    .then(Commands.argument("rank", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+                        ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                        String rank = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "rank");
+                        if (!RankStore.set(target.getUUID(), rank, context.getSource().getServer())) {
+                            context.getSource().sendFailure(Component.literal("Valid ranks: member, vip, mvp, admin."));
+                            return 0;
+                        }
+                        context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s rank to " + rank.toLowerCase(java.util.Locale.ROOT) + "."), true);
+                        target.sendSystemMessage(Component.literal("Your rank is now " + RankStore.get(target.getUUID()) + "."));
+                        return 1;
+                    }))))
+            .then(Commands.argument("player", EntityArgument.player()).executes(context -> {
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                context.getSource().sendSuccess(() -> Component.literal(target.getGameProfile().name() + "'s rank: " + RankStore.get(target.getUUID())), false);
+                return 1;
+            })));
+        dispatcher.register(Commands.literal("help-").executes(context -> {
+            context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /lobby, /setlobby, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
+            return 1;
+        }));
+        dispatcher.register(Commands.literal("ah")
+            .then(Commands.literal("list").executes(context -> {
+                var listings = AuctionStore.listings();
+                if (listings.isEmpty()) {
+                    context.getSource().sendSuccess(() -> Component.literal("The auction house is empty."), false);
+                    return 1;
+                }
+                for (AuctionStore.Listing listing : listings) {
+                    context.getSource().sendSuccess(() -> Component.literal("#" + listing.id() + " " + listing.amount()
+                        + "x " + listing.itemId() + " — $" + listing.price() + " (seller " + listing.seller() + ")"), false);
+                }
+                return 1;
+            }))
+            .then(Commands.literal("sell")
+                .then(Commands.argument("price", LongArgumentType.longArg(1)).executes(context -> {
+                    ServerPlayer seller = context.getSource().getPlayerOrException();
+                    long price = LongArgumentType.getLong(context, "price");
+                    net.minecraft.world.item.ItemStack held = seller.getMainHandItem();
+                    if (held.isEmpty()) {
+                        context.getSource().sendFailure(Component.literal("Hold an item to list."));
+                        return 0;
+                    }
+                    String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
+                    int amount = held.getCount();
+                    AuctionStore.Listing listing = AuctionStore.create(seller.getUUID(), price, itemId, amount, context.getSource().getServer());
+                    seller.getInventory().setItem(seller.getInventory().getSelectedSlot(), net.minecraft.world.item.ItemStack.EMPTY);
+                    seller.sendSystemMessage(Component.literal("Listed " + amount + "x " + itemId + " as auction #" + listing.id() + " for $" + price + "."));
+                    return 1;
+                })))
+            .then(Commands.literal("buy")
+                .then(Commands.argument("id", LongArgumentType.longArg(1)).executes(context -> {
+                    ServerPlayer buyer = context.getSource().getPlayerOrException();
+                    long id = LongArgumentType.getLong(context, "id");
+                    AuctionStore.Listing listing = AuctionStore.get(id);
+                    if (listing == null) {
+                        context.getSource().sendFailure(Component.literal("Auction listing not found."));
+                        return 0;
+                    }
+                    if (listing.seller().equals(buyer.getUUID())) {
+                        context.getSource().sendFailure(Component.literal("You cannot buy your own listing."));
+                        return 0;
+                    }
+                    if (buyer.getInventory().getFreeSlot() < 0) {
+                        context.getSource().sendFailure(Component.literal("Free an inventory slot before buying."));
+                        return 0;
+                    }
+                    net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(listing.itemId());
+                    net.minecraft.world.item.Item item = itemId == null ? null : net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(itemId);
+                    if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                        context.getSource().sendFailure(Component.literal("The listed item is no longer available."));
+                        return 0;
+                    }
+                    if (!ECONOMY.withdraw(buyer.getUUID(), listing.price())) {
+                        context.getSource().sendFailure(Component.literal("Insufficient funds. This listing costs $" + listing.price() + "."));
+                        return 0;
+                    }
+                    AuctionStore.remove(id, context.getSource().getServer());
+                    net.minecraft.world.item.ItemStack bought = new net.minecraft.world.item.ItemStack(item, listing.amount());
+                    if (!buyer.getInventory().add(bought)) {
+                        ECONOMY.deposit(buyer.getUUID(), listing.price());
+                        AuctionStore.create(listing.seller(), listing.price(), listing.itemId(), listing.amount(), context.getSource().getServer());
+                        ECONOMY.save(context.getSource().getServer());
+                        context.getSource().sendFailure(Component.literal("Could not add the item to your inventory; purchase refunded."));
+                        return 0;
+                    }
+                    ECONOMY.deposit(listing.seller(), listing.price());
+                    ECONOMY.save(context.getSource().getServer());
+                    ServerPlayer seller = context.getSource().getServer().getPlayerList().getPlayer(listing.seller());
+                    if (seller != null) seller.sendSystemMessage(Component.literal("Your auction #" + id + " sold for $" + listing.price() + "."));
+                    context.getSource().sendSuccess(() -> Component.literal("Bought auction #" + id + " for $" + listing.price() + "."), false);
+                    return 1;
+                })))
+            .then(Commands.literal("cancel")
+                .then(Commands.argument("id", LongArgumentType.longArg(1)).executes(context -> {
+                    ServerPlayer actor = context.getSource().getPlayerOrException();
+                    long id = LongArgumentType.getLong(context, "id");
+                    AuctionStore.Listing listing = AuctionStore.get(id);
+                    if (listing == null || (!listing.seller().equals(actor.getUUID())
+                        && !context.getSource().getServer().getPlayerList().isOp(actor.nameAndId()))) {
+                        context.getSource().sendFailure(Component.literal("Listing not found or you do not own it."));
+                        return 0;
+                    }
+                    ServerPlayer seller = context.getSource().getServer().getPlayerList().getPlayer(listing.seller());
+                    if (seller == null || seller.getInventory().getFreeSlot() < 0) {
+                        context.getSource().sendFailure(Component.literal("The seller must be online with a free inventory slot to cancel this listing."));
+                        return 0;
+                    }
+                    net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(listing.itemId());
+                    net.minecraft.world.item.Item item = itemId == null ? null : net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(itemId);
+                    if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                        context.getSource().sendFailure(Component.literal("The listed item is no longer available."));
+                        return 0;
+                    }
+                    AuctionStore.remove(id, context.getSource().getServer());
+                    seller.getInventory().add(new net.minecraft.world.item.ItemStack(item, listing.amount()));
+                    seller.sendSystemMessage(Component.literal("Auction #" + id + " was cancelled and returned."));
+                    return 1;
+                }))));
+        LocationCommands.register(dispatcher);
         });
     }
 
