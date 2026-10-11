@@ -61,17 +61,17 @@ public final class LocationCommands {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("sethome")
+        dispatcher.register(Commands.literal("sethome").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "sethome"))
             .executes(context -> setHome(context.getSource().getPlayerOrException(), "home", context.getSource().getServer()))
             .then(Commands.argument("name", StringArgumentType.word()).executes(context ->
                 setHome(context.getSource().getPlayerOrException(), StringArgumentType.getString(context, "name"), context.getSource().getServer()))));
 
-        dispatcher.register(Commands.literal("home")
+        dispatcher.register(Commands.literal("home").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "home"))
             .executes(context -> goHome(context.getSource().getPlayerOrException(), "home", context.getSource().getServer()))
             .then(Commands.argument("name", StringArgumentType.word()).executes(context ->
                 goHome(context.getSource().getPlayerOrException(), StringArgumentType.getString(context, "name"), context.getSource().getServer()))));
 
-        dispatcher.register(Commands.literal("delhome")
+        dispatcher.register(Commands.literal("delhome").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "delhome"))
             .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 String key = homeKey(player.getUUID(), StringArgumentType.getString(context, "name"));
@@ -86,7 +86,7 @@ public final class LocationCommands {
                 return 1;
             })));
 
-        dispatcher.register(Commands.literal("setwarp").requires(LocationCommands::isOperator)
+        dispatcher.register(Commands.literal("setwarp").requires(source -> LocationCommands.isOperator(source) && !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "setwarp"))
             .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 String name = StringArgumentType.getString(context, "name").toLowerCase(java.util.Locale.ROOT);
@@ -98,7 +98,7 @@ public final class LocationCommands {
                 return 1;
             })));
 
-        dispatcher.register(Commands.literal("warp")
+        dispatcher.register(Commands.literal("warp").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "warp"))
             .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
                 String name = StringArgumentType.getString(context, "name").toLowerCase(java.util.Locale.ROOT);
                 String encoded;
@@ -106,7 +106,7 @@ public final class LocationCommands {
                 return teleport(context.getSource(), encoded, "Warp not found.");
             })));
 
-        dispatcher.register(Commands.literal("delwarp").requires(LocationCommands::isOperator)
+        dispatcher.register(Commands.literal("delwarp").requires(source -> LocationCommands.isOperator(source) && !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "delwarp"))
             .then(Commands.argument("name", StringArgumentType.word()).executes(context -> {
                 String name = StringArgumentType.getString(context, "name").toLowerCase(java.util.Locale.ROOT);
                 synchronized (LocationCommands.class) {
@@ -120,7 +120,7 @@ public final class LocationCommands {
                 return 1;
             })));
 
-        dispatcher.register(Commands.literal("setlobby").requires(LocationCommands::isOperator).executes(context -> {
+        dispatcher.register(Commands.literal("setlobby").requires(source -> LocationCommands.isOperator(source) && !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "setlobby")).executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             synchronized (LocationCommands.class) {
                 DATA.setProperty("lobby", encode(player));
@@ -130,13 +130,13 @@ public final class LocationCommands {
             return 1;
         }));
 
-        dispatcher.register(Commands.literal("lobby").executes(context -> {
+        dispatcher.register(Commands.literal("lobby").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "lobby")).executes(context -> {
             String encoded;
             synchronized (LocationCommands.class) { encoded = DATA.getProperty("lobby"); }
             return teleport(context.getSource(), encoded, "Lobby location has not been set.");
         }));
 
-        dispatcher.register(Commands.literal("friend")
+        dispatcher.register(Commands.literal("friend").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "friend"))
             .then(Commands.literal("add").then(Commands.argument("player", EntityArgument.player()).executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 ServerPlayer target = EntityArgument.getPlayer(context, "player");
@@ -170,14 +170,14 @@ public final class LocationCommands {
                 }
                 return 1;
             })));
-        dispatcher.register(Commands.literal("homefriends").executes(context -> {
+        dispatcher.register(Commands.literal("homefriends").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "homefriends")).executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             boolean enabled = FriendStore.setHomeVisits(player.getUUID(),
                 !FriendStore.homeVisitsEnabled(player.getUUID()), context.getSource().getServer());
             player.sendSystemMessage(Component.literal("Friends may now " + (enabled ? "visit" : "not visit") + " your homes."));
             return 1;
         }));
-        dispatcher.register(Commands.literal("homevisit")
+        dispatcher.register(Commands.literal("homevisit").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "homevisit"))
             .then(Commands.argument("player", EntityArgument.player())
                 .then(Commands.argument("home", StringArgumentType.word()).executes(context -> {
                     ServerPlayer visitor = context.getSource().getPlayerOrException();
@@ -194,7 +194,7 @@ public final class LocationCommands {
                     }
                     return teleport(context.getSource(), encoded, "That home does not exist.");
                 }))));
-        dispatcher.register(Commands.literal("rtp").executes(context -> {
+        dispatcher.register(Commands.literal("rtp").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "rtp")).executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             if (!(player.level() instanceof ServerLevel level)) {
                 context.getSource().sendFailure(Component.literal("Random teleport is unavailable in this world."));
@@ -220,16 +220,16 @@ public final class LocationCommands {
             return 0;
         }));
 
-        dispatcher.register(Commands.literal("tpa")
+        dispatcher.register(Commands.literal("tpa").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "tpa"))
             .then(Commands.argument("player", EntityArgument.player()).executes(context ->
                 requestTeleport(context.getSource().getPlayerOrException(), EntityArgument.getPlayer(context, "player"), false, context.getSource()))));
 
-        dispatcher.register(Commands.literal("tpahere")
+        dispatcher.register(Commands.literal("tpahere").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "tpahere"))
             .then(Commands.argument("player", EntityArgument.player()).executes(context ->
                 requestTeleport(context.getSource().getPlayerOrException(), EntityArgument.getPlayer(context, "player"), true, context.getSource()))));
 
-        dispatcher.register(Commands.literal("tpaccept").executes(context -> respond(context.getSource().getPlayerOrException(), true, context.getSource())));
-        dispatcher.register(Commands.literal("tpdeny").executes(context -> respond(context.getSource().getPlayerOrException(), false, context.getSource())));
+        dispatcher.register(Commands.literal("tpaccept").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "tpaccept")).executes(context -> respond(context.getSource().getPlayerOrException(), true, context.getSource())));
+        dispatcher.register(Commands.literal("tpdeny").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "tpdeny")).executes(context -> respond(context.getSource().getPlayerOrException(), false, context.getSource())));
     }
 
     private static boolean isOperator(CommandSourceStack source) {
