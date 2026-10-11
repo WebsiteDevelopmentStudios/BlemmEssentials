@@ -46,7 +46,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     return 1;
                 })
                 .then(argument("player", EntityArgument.player())
-                    .requires(source -> source.getEntity() == null || source.getServer().getPlayerList().isOp(source.getEntity().getGameProfile()))
+                    .requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer player && source.getServer().getPlayerList().isOp(player.getGameProfile())))
                     .then(argument("amount", LongArgumentType.longArg(0))
                         .executes(context -> {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
@@ -74,8 +74,8 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                                 return 0;
                             }
                             ECONOMY.save(context.getSource().getServer());
-                            sender.sendSystemMessage(Component.literal("You paid " + target.getGameProfile().getName() + " $" + amount + "."));
-                            target.sendSystemMessage(Component.literal(sender.getGameProfile().getName() + " paid you $" + amount + "."));
+                            sender.sendSystemMessage(Component.literal("You paid " + target.getGameProfile().name() + " $" + amount + "."));
+                            target.sendSystemMessage(Component.literal(sender.getGameProfile().name() + " paid you $" + amount + "."));
                             return 1;
                         }))));
 
