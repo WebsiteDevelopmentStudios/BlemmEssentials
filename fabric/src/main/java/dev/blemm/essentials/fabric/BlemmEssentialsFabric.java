@@ -85,8 +85,8 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
             dispatcher.register(Commands.literal("shopprice")
                 .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
-                    String itemId = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item").toLowerCase(java.util.Locale.ROOT);
-                    if (!itemId.contains(":")) itemId = "minecraft:" + itemId;
+                    String rawItemId = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item").toLowerCase(java.util.Locale.ROOT);
+                    final String itemId = rawItemId.contains(":") ? rawItemId : "minecraft:" + rawItemId;
                     context.getSource().sendSuccess(() -> Component.literal(itemId + " — buy: $" +
                         dev.blemm.essentials.shop.ShopPrices.buy(itemId) + ", sell: $" +
                         dev.blemm.essentials.shop.ShopPrices.sell(itemId) +
