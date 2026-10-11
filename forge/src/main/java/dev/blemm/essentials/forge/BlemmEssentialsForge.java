@@ -44,13 +44,13 @@ public final class BlemmEssentialsForge {
                 context.getSource().sendSuccess(() -> Component.literal("Balance: $" + ECONOMY.balance(player.getUUID())), false);
                 return 1;
             })
-            .then(Commands.argument("player", EntityArgument.player()).requires(source -> source.hasPermission(2))
+            .then(Commands.argument("player", EntityArgument.player()).requires(source -> source.getEntity() == null || (source.getEntity() instanceof ServerPlayer player && source.getServer().getPlayerList().isOp(player.nameAndId())))
                 .then(Commands.argument("amount", LongArgumentType.longArg(0)).executes(context -> {
                     ServerPlayer target = EntityArgument.getPlayer(context, "player");
                     long amount = LongArgumentType.getLong(context, "amount");
                     ECONOMY.setBalance(target.getUUID(), amount);
                     ECONOMY.save(context.getSource().getServer());
-                    context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().getName() + "'s balance to $" + amount + "."), true);
+                    context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s balance to $" + amount + "."), true);
                     target.sendSystemMessage(Component.literal("Your balance is now $" + amount + "."));
                     return 1;
                 }))));
@@ -69,8 +69,8 @@ public final class BlemmEssentialsForge {
                         return 0;
                     }
                     ECONOMY.save(context.getSource().getServer());
-                    sender.sendSystemMessage(Component.literal("You paid " + target.getGameProfile().getName() + " $" + amount + "."));
-                    target.sendSystemMessage(Component.literal(sender.getGameProfile().getName() + " paid you $" + amount + "."));
+                    sender.sendSystemMessage(Component.literal("You paid " + target.getGameProfile().name() + " $" + amount + "."));
+                    target.sendSystemMessage(Component.literal(sender.getGameProfile().name() + " paid you $" + amount + "."));
                     return 1;
                 }))));
     }
