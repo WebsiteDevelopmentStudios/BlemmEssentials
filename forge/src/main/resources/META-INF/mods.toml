@@ -12,7 +12,7 @@ description='''BlemmEssentials economy commands for Forge dedicated servers.'''
 [[dependencies.blemmessentials]]
 modId="forge"
 mandatory=true
-versionRange="[0,)"
+versionRange="[66,)"
 ordering="NONE"
 side="SERVER"
 
