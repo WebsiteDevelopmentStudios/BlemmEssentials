@@ -75,7 +75,75 @@ public final class BlemmEssentialsNeoForge {
                     target.sendSystemMessage(Component.literal(sender.getGameProfile().name() + " paid you $" + amount + "."));
                     return 1;
                 }))));
+        dispatcher.register(Commands.literal("shop")
+            .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .then(Commands.argument("amount", LongArgumentType.longArg(1, 64)).executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    String rawId = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "item").toLowerCase(java.util.Locale.ROOT);
+                    if (!rawId.contains(":")) rawId = "minecraft:" + rawId;
+                    net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(rawId);
+                    if (itemId == null) {
+                        context.getSource().sendFailure(Component.literal("Invalid item ID."));
+                        return 0;
+                    }
+                    net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(itemId);
+                    if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                        context.getSource().sendFailure(Component.literal("Unknown item."));
+                        return 0;
+                    }
+                    int amount = (int) LongArgumentType.getLong(context, "amount");
+                    long price = priceFor(itemId.toString()) * amount;
+                    if (player.getInventory().getFreeSlot() < 0) {
+                        context.getSource().sendFailure(Component.literal("Free an inventory slot before buying."));
+                        return 0;
+                    }
+                    if (!ECONOMY.withdraw(player.getUUID(), price)) {
+                        context.getSource().sendFailure(Component.literal("Insufficient funds. Item costs $" + price + "."));
+                        return 0;
+                    }
+                    net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item, amount);
+                    if (!player.getInventory().add(stack)) {
+                        ECONOMY.deposit(player.getUUID(), price);
+                        context.getSource().sendFailure(Component.literal("Could not add the item to your inventory."));
+                        return 0;
+                    }
+                    ECONOMY.save(context.getSource().getServer());
+                    context.getSource().sendSuccess(() -> Component.literal("Bought " + amount + " " + itemId + " for $" + price + "."), false);
+                    return 1;
+                }))));
+        dispatcher.register(Commands.literal("sell")
+            .executes(context -> {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                net.minecraft.world.item.ItemStack stack = player.getMainHandItem();
+                if (stack.isEmpty()) {
+                    context.getSource().sendFailure(Component.literal("Hold an item to sell."));
+                    return 0;
+                }
+                String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+                int amount = stack.getCount();
+                long payout = Math.max(1L, priceFor(itemId) / 4L) * amount;
+                stack.shrink(amount);
+                player.getInventory().setItem(player.getInventory().getSelectedSlot(), stack.isEmpty() ? net.minecraft.world.item.ItemStack.EMPTY : stack);
+                ECONOMY.deposit(player.getUUID(), payout);
+                ECONOMY.save(context.getSource().getServer());
+                context.getSource().sendSuccess(() -> Component.literal("Sold " + amount + " " + itemId + " for $" + payout + "."), false);
+                return 1;
+            }));
         LocationCommands.register(dispatcher);
+    }
+
+    private static long priceFor(String itemId) {
+        return switch (itemId) {
+            case "minecraft:diamond" -> 250L;
+            case "minecraft:iron_ingot" -> 40L;
+            case "minecraft:gold_ingot" -> 55L;
+            case "minecraft:emerald" -> 150L;
+            case "minecraft:bread" -> 8L;
+            case "minecraft:cooked_beef" -> 18L;
+            case "minecraft:obsidian" -> 90L;
+            case "minecraft:ender_pearl" -> 45L;
+            default -> 10L;
+        };
     }
 
     private static final class EconomyStore {
@@ -84,6 +152,17 @@ public final class BlemmEssentialsNeoForge {
 
         long balance(UUID id) { return balances.getOrDefault(id, 100L); }
         void setBalance(UUID id, long amount) { balances.put(id, amount); }
+        boolean withdraw(UUID player, long amount) {
+            long current = balance(player);
+            if (amount < 0 || current < amount) return false;
+            balances.put(player, current - amount);
+            return true;
+        }
+
+        void deposit(UUID player, long amount) {
+            if (amount < 0 || Long.MAX_VALUE - balance(player) < amount) return;
+            balances.put(player, balance(player) + amount);
+        }
 
         boolean transfer(UUID from, UUID to, long amount) {
             long current = balance(from);
