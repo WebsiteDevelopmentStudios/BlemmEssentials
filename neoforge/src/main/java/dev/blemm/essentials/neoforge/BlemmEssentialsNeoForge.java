@@ -6,6 +6,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import dev.blemm.essentials.locations.LocationCommands;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -28,8 +29,8 @@ public final class BlemmEssentialsNeoForge {
 
     public BlemmEssentialsNeoForge(IEventBus modEventBus) {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
-        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> ECONOMY.load(event.getServer()));
-        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> ECONOMY.save(event.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); });
+        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> { ECONOMY.save(event.getServer()); LocationCommands.save(event.getServer()); });
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
@@ -74,6 +75,7 @@ public final class BlemmEssentialsNeoForge {
                     target.sendSystemMessage(Component.literal(sender.getGameProfile().name() + " paid you $" + amount + "."));
                     return 1;
                 }))));
+        LocationCommands.register(dispatcher);
     }
 
     private static final class EconomyStore {
