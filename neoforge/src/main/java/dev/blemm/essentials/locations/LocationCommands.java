@@ -194,7 +194,10 @@ public final class LocationCommands {
             double z = Double.parseDouble(fields[3]);
             float yaw = Float.parseFloat(fields[4]);
             float pitch = Float.parseFloat(fields[5]);
-            ServerPlayer player = source.getPlayerOrException();
+            if (!(source.getEntity() instanceof ServerPlayer player)) {
+                source.sendFailure(Component.literal("This command can only be used by a player."));
+                return 0;
+            }
             player.teleportTo(level, x, y, z, Set.of(), yaw, pitch, false);
             player.sendSystemMessage(Component.literal("Teleported."));
             return 1;
