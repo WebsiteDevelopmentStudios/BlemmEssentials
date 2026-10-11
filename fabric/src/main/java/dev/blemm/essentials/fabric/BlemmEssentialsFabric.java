@@ -101,6 +101,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                 return 1;
             }));
         dispatcher.register(Commands.literal("shop").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "shop"))
+            .executes(context -> { ServerPlayer player = context.getSource().getPlayerOrException(); openShop(player, context.getSource().getServer()); return 1; })
             .then(Commands.argument("item", com.mojang.brigadier.arguments.StringArgumentType.word())
                 .then(Commands.argument("amount", LongArgumentType.longArg(1, 64)).executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
@@ -301,6 +302,33 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     return 1;
                 }))));
         LocationCommands.register(dispatcher);
+        });
+    }
+
+    private static void openShop(ServerPlayer player, MinecraftServer server) {
+        dev.blemm.essentials.shop.ShopMenu.openCategories(player, (buyer, stack) -> {
+            String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+            long unitPrice = dev.blemm.essentials.shop.ShopPrices.buy(itemId);
+            long total = unitPrice * stack.getCount();
+            if (unitPrice <= 0 || total < 0) {
+                buyer.sendSystemMessage(Component.literal("This item is not available for purchase."));
+                return;
+            }
+            if (buyer.getInventory().getFreeSlot() < 0) {
+                buyer.sendSystemMessage(Component.literal("Free an inventory slot before buying."));
+                return;
+            }
+            if (!ECONOMY.withdraw(buyer.getUUID(), total)) {
+                buyer.sendSystemMessage(Component.literal("Insufficient funds. This purchase costs $" + total + "."));
+                return;
+            }
+            if (!buyer.getInventory().add(stack.copy())) {
+                ECONOMY.deposit(buyer.getUUID(), total);
+                buyer.sendSystemMessage(Component.literal("Could not add the item; purchase refunded."));
+                return;
+            }
+            ECONOMY.save(server);
+            buyer.sendSystemMessage(Component.literal("Bought " + stack.getCount() + "x " + itemId + " for $" + total + "."));
         });
     }
 
