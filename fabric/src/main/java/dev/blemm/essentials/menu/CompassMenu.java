@@ -42,7 +42,7 @@ public final class CompassMenu {
             if (isMenuCompass(player.getInventory().getItem(i))) return;
         }
         ItemStack compass = makeCompass();
-        if (!player.getInventory().add(compass)) player.drop(compass, false);
+        player.getInventory().add(compass);
     }
 
     public static void open(ServerPlayer player) {
@@ -60,7 +60,7 @@ public final class CompassMenu {
             set(10, Items.EMERALD, "Balance", "balance");
             set(11, Items.CHEST, "Shop", "shop");
             set(12, Items.GOLD_INGOT, "Auction House", "ah list");
-            set(13, Items.RED_BED, "Homes", "home");
+            set(13, Items.WHITE_BED, "Homes", "home");
             set(14, Items.ENDER_PEARL, "Warps", "warp list");
             set(15, Items.PLAYER_HEAD, "Friends", "friend list");
             set(16, Items.NETHER_STAR, "Lobby", "lobby");
