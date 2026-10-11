@@ -8,8 +8,8 @@ BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the ref
 | --- | --- | --- |
 | Paper/Purpur | `paper/` | Reference implementation: economy, teleports, homes, warps, ranks, shop, selling, auction house, integrations, and GUI flows |
 | Fabric | `fabric/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
-| Forge | `forge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
-| NeoForge | `neoforge/` | Economy, command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
+| Forge | `forge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
+| NeoForge | `neoforge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
 
 The mod ports are a functional first pass, **not exact feature parity**. Paper's exact shop GUI flows and selling rules/category assignments, DiscordSRV itself, PlaceholderAPI, Geyser/Floodgate avatar integration, Multiverse integration, and Paper-specific menu/compass behavior are not ported to the mod loaders. The mod ports offer an optional Discord webhook as an alternative for auction announcements. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop has a native vanilla chest GUI and command access; the auction house is command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings now persist the complete item stack, including custom components, names, lore, and enchantments.
 
