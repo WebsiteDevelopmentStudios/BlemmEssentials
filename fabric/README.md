@@ -2,14 +2,20 @@
 
 Native Fabric server mod targeting Minecraft 26.3 and Java 25.
 
-## Commands currently implemented
+## Commands
 
-- `/balance` and `/money` — show the executing player's balance.
-- `/pay <player> <amount>` — transfer money to an online player.
-- `/money <player> <amount>` — operator-only balance adjustment.
+- Economy: `/balance`, `/money`, `/pay <player> <amount>`.
+- Shop and selling: `/shop <item> <amount>`, `/sell` (sells the held stack).
+- Auction house: `/ah list`, `/ah sell <price>`, `/ah buy <id>`, `/ah cancel <id>`.
+- Homes: `/sethome [name]`, `/home [name]`, `/delhome <name>` (three homes by default).
+- Warps/lobby: `/setwarp <name>`, `/warp <name>`, `/delwarp <name>`, `/setlobby`, `/lobby`.
+- Teleporting: `/rtp`, `/tpa <player>`, `/tpahere <player>`, `/tpaccept`, `/tpdeny`.
+- Friends: `/friend add <player>`, `/friend remove <player>`, `/friend list`, `/homefriends`, `/homevisit <player> <home>`.
+- Ranks: `/rank`, `/rank <player>`, operator-only `/rank set <player> <member|vip|mvp|admin>`.
+- Help: `/help-`.
 
-Balances persist in `blemmessentials/balances.tsv` inside the server directory. Install this mod on the server; it is marked as server-side.
+Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
-This is the first porting milestone, not full parity with the Paper plugin yet. Homes, teleports, warps, ranks, shops, auctions, and optional Paper integrations remain to be ported.
+The loader port is command-based rather than GUI-based and is not yet identical to Paper. It does not include the Paper shop GUI, integrations, rank chat/tab prefixes, or custom item metadata in auction listings.
 
-Build from the repository root with Java 25: `gradle -p fabric build`.
+Build with Java 25: `gradle -p fabric build`.
