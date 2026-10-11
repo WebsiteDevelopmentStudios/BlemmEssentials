@@ -94,6 +94,11 @@ public final class BlemmEssentialsForge {
                         return 0;
                     }
                     int amount = (int) LongArgumentType.getLong(context, "amount");
+                    int stackLimit = new net.minecraft.world.item.ItemStack(item).getMaxStackSize();
+                    if (amount > stackLimit) {
+                        context.getSource().sendFailure(Component.literal("That item stacks to a maximum of " + stackLimit + "."));
+                        return 0;
+                    }
                     long price = priceFor(itemId.toString()) * amount;
                     if (player.getInventory().getFreeSlot() < 0) {
                         context.getSource().sendFailure(Component.literal("Free an inventory slot before buying."));
