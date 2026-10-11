@@ -8,7 +8,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -170,7 +170,7 @@ public final class LocationCommands {
     }
 
     private static String encode(ServerPlayer player) {
-        return player.level().dimension().location() + ";"
+        return player.level().dimension().identifier() + ";"
             + player.getX() + ";" + player.getY() + ";" + player.getZ() + ";"
             + player.getYRot() + ";" + player.getXRot();
     }
@@ -183,7 +183,7 @@ public final class LocationCommands {
         try {
             String[] fields = encoded.split(";", -1);
             if (fields.length != 6) throw new IllegalArgumentException("Invalid saved location");
-            ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(fields[0]));
+            ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, Identifier.parse(fields[0]));
             ServerLevel level = source.getServer().getLevel(dimension);
             if (level == null) {
                 source.sendFailure(Component.literal("That location's world is not loaded."));
@@ -195,7 +195,7 @@ public final class LocationCommands {
             float yaw = Float.parseFloat(fields[4]);
             float pitch = Float.parseFloat(fields[5]);
             ServerPlayer player = source.getPlayerOrException();
-            player.teleportTo(level, x, y, z, Set.of(), yaw, pitch);
+            player.teleportTo(level, x, y, z, Set.of(), yaw, pitch, false);
             player.sendSystemMessage(Component.literal("Teleported."));
             return 1;
         } catch (RuntimeException exception) {
@@ -235,8 +235,12 @@ public final class LocationCommands {
         }
         ServerPlayer moving = request.teleportHere() ? requester : target;
         ServerPlayer destination = request.teleportHere() ? target : requester;
-        moving.teleportTo(destination.serverLevel(), destination.getX(), destination.getY(), destination.getZ(),
-            Set.of(), destination.getYRot(), destination.getXRot());
+        if (!(destination.level() instanceof ServerLevel destinationLevel)) {
+            source.sendFailure(Component.literal("The destination world is unavailable."));
+            return 0;
+        }
+        moving.teleportTo(destinationLevel, destination.getX(), destination.getY(), destination.getZ(),
+            Set.of(), destination.getYRot(), destination.getXRot(), false);
         moving.sendSystemMessage(Component.literal("Teleport request accepted."));
         return 1;
     }
