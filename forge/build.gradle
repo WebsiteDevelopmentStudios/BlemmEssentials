@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+}
+
+version = '1.2.0'
+group = 'dev.blemm.essentials'
+base { archivesName = 'BlemmEssentials-Forge' }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+minecraft {
+    runs {
+        configureEach {
+            workingDirectory = layout.projectDirectory.dir('run')
+            systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
+        }
+        register('server') { args '--nogui' }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    // Resolve the newest published Forge build for Minecraft 26.3.
+    implementation minecraft.dependency('net.minecraftforge:forge:26.3-+')
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.6'
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') { expand 'version': project.version }
+}
