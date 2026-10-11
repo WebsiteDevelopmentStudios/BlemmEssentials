@@ -6,6 +6,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
@@ -31,6 +32,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> dev.blemm.essentials.ranks.RankPresentation.apply(handler.player));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 
@@ -185,6 +187,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                             context.getSource().sendFailure(Component.literal("Valid ranks: member, vip, mvp, admin."));
                             return 0;
                         }
+                        dev.blemm.essentials.ranks.RankPresentation.apply(target);
                         context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s rank to " + rank.toLowerCase(java.util.Locale.ROOT) + "."), true);
                         target.sendSystemMessage(Component.literal("Your rank is now " + RankStore.get(target.getUUID()) + "."));
                         return 1;
