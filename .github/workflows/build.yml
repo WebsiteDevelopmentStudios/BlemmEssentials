@@ -19,24 +19,62 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: paper-jar, path: paper/target/BlemmEssentials-*.jar }
 
-  # Fabric / NeoForge / Forge ports: add a build job here once each project contains sources.
-  # Each job should upload an artifact named fabric-jar / neoforge-jar / forge-jar.
+  fabric:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '25' }
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+      - name: Build Fabric mod
+        run: gradle -p fabric build
+      - uses: actions/upload-artifact@v4
+        with: { name: fabric-jar, path: fabric/build/libs/*.jar }
+
+  neoforge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '25' }
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+      - name: Build NeoForge mod
+        run: gradle -p neoforge build
+      - uses: actions/upload-artifact@v4
+        with: { name: neoforge-jar, path: neoforge/build/libs/*.jar }
+
+  forge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '25' }
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+      - name: Build Forge mod
+        run: gradle -p forge build
+      - uses: actions/upload-artifact@v4
+        with: { name: forge-jar, path: forge/build/libs/*.jar }
 
   bundle:
-    needs: [paper]
+    needs: [paper, fabric, neoforge, forge]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with: { path: artifacts, merge-multiple: false }
-      - name: Assemble folders
+      - name: Assemble platform jars
         run: |
           mkdir -p bundle/paper bundle/fabric bundle/neoforge bundle/forge
           cp artifacts/paper-jar/*.jar bundle/paper/
-          for d in fabric neoforge forge; do
-            if ls artifacts/$d-jar/*.jar >/dev/null 2>&1; then cp artifacts/$d-jar/*.jar bundle/$d/;
-            else cp $d/README.md bundle/$d/; fi
-          done
+          cp artifacts/fabric-jar/*.jar bundle/fabric/
+          cp artifacts/neoforge-jar/*.jar bundle/neoforge/
+          cp artifacts/forge-jar/*.jar bundle/forge/
           cd bundle && zip -r ../BlemmEssentials-all-platforms.zip .
       - uses: actions/upload-artifact@v4
         with: { name: BlemmEssentials-all-platforms, path: BlemmEssentials-all-platforms.zip }
