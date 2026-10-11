@@ -91,6 +91,7 @@ public final class ShopPrices {
 
     public static synchronized long buy(String itemId) { return price(itemId, "buy"); }
     public static synchronized long sell(String itemId) { return price(itemId, "sell"); }
+    public static synchronized String categoryFor(String itemId) { return category(itemId.toLowerCase(Locale.ROOT)); }
 
     private static long price(String itemId, String side) {
         String normalized = itemId.toLowerCase(Locale.ROOT);
