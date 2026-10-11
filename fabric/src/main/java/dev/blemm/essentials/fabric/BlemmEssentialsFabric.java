@@ -46,14 +46,14 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                     return 1;
                 })
                 .then(argument("player", EntityArgument.player())
-                    .requires(source -> source.hasPermission(2))
+                    .requires(source -> source.getEntity() == null || source.getServer().getPlayerList().isOp(source.getEntity().getGameProfile()))
                     .then(argument("amount", LongArgumentType.longArg(0))
                         .executes(context -> {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             long amount = LongArgumentType.getLong(context, "amount");
                             ECONOMY.setBalance(target.getUUID(), amount);
                             ECONOMY.save(context.getSource().getServer());
-                            context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().getName() + "'s balance to $" + amount + "."), true);
+                            context.getSource().sendSuccess(() -> Component.literal("Set " + target.getGameProfile().name() + "'s balance to $" + amount + "."), true);
                             target.sendSystemMessage(Component.literal("Your balance is now $" + amount + "."));
                             return 1;
                         }))));
