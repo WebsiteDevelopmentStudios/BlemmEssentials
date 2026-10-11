@@ -35,28 +35,28 @@ public final class ShopPrices {
     }
 
     private static void defaults() {
-        PRICES.setProperty("default.building_blocks.buy", "10");
-        PRICES.setProperty("default.building_blocks.sell", "2");
-        PRICES.setProperty("default.natural.buy", "10");
-        PRICES.setProperty("default.natural.sell", "2");
-        PRICES.setProperty("default.ores_minerals.buy", "10");
-        PRICES.setProperty("default.ores_minerals.sell", "2");
-        PRICES.setProperty("default.tools.buy", "10");
-        PRICES.setProperty("default.tools.sell", "2");
-        PRICES.setProperty("default.combat.buy", "10");
-        PRICES.setProperty("default.combat.sell", "2");
-        PRICES.setProperty("default.food.buy", "10");
+        PRICES.setProperty("default.building_blocks.buy", "4");
+        PRICES.setProperty("default.building_blocks.sell", "1");
+        PRICES.setProperty("default.natural.buy", "3");
+        PRICES.setProperty("default.natural.sell", "1");
+        PRICES.setProperty("default.ores_minerals.buy", "40");
+        PRICES.setProperty("default.ores_minerals.sell", "12");
+        PRICES.setProperty("default.tools.buy", "60");
+        PRICES.setProperty("default.tools.sell", "15");
+        PRICES.setProperty("default.combat.buy", "80");
+        PRICES.setProperty("default.combat.sell", "20");
+        PRICES.setProperty("default.food.buy", "6");
         PRICES.setProperty("default.food.sell", "2");
-        PRICES.setProperty("default.farming.buy", "10");
+        PRICES.setProperty("default.farming.buy", "5");
         PRICES.setProperty("default.farming.sell", "2");
-        PRICES.setProperty("default.redstone.buy", "10");
-        PRICES.setProperty("default.redstone.sell", "2");
-        PRICES.setProperty("default.decoration.buy", "10");
+        PRICES.setProperty("default.redstone.buy", "12");
+        PRICES.setProperty("default.redstone.sell", "4");
+        PRICES.setProperty("default.decoration.buy", "6");
         PRICES.setProperty("default.decoration.sell", "2");
-        PRICES.setProperty("default.brewing.buy", "10");
-        PRICES.setProperty("default.brewing.sell", "2");
-        PRICES.setProperty("default.transport.buy", "10");
-        PRICES.setProperty("default.transport.sell", "2");
+        PRICES.setProperty("default.brewing.buy", "15");
+        PRICES.setProperty("default.brewing.sell", "4");
+        PRICES.setProperty("default.transport.buy", "25");
+        PRICES.setProperty("default.transport.sell", "6");
         PRICES.setProperty("default.miscellaneous.buy", "10");
         PRICES.setProperty("default.miscellaneous.sell", "2");
         PRICES.setProperty("item.minecraft:diamond.buy", "250");
