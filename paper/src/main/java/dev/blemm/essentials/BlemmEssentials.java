@@ -33,7 +33,7 @@ import java.util.*;
 public class BlemmEssentials extends JavaPlugin implements Listener {
     private static final List<String> COMMANDS = List.of("money", "pay", "tpa", "tpahere", "tpaccept", "tpdeny", "rtp",
             "sethome", "home", "delhome", "setwarp", "warp", "delwarp", "help-", "admin",
-            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank");
+            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank", "setup");
 
     public static final String PREFIX = ChatColor.GOLD + "[Blemm] " + ChatColor.RESET;
 
