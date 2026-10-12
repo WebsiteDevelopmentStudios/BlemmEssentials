@@ -38,14 +38,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> { dev.blemm.essentials.ranks.RankPresentation.apply(handler.player); dev.blemm.essentials.menu.CompassMenu.onJoin(handler.player); dev.blemm.essentials.integrations.BedrockAvatarLookup.load(handler.player); });
-        UseItemCallback.EVENT.register((player, level, hand) -> {
-            if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
-            ItemStack held = player.getItemInHand(hand);
-            if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(held)) return InteractionResult.PASS;
-            dev.blemm.essentials.menu.CompassMenu.open(serverPlayer);
-            return InteractionResult.SUCCESS;
-        });
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> { dev.blemm.essentials.ranks.RankPresentation.apply(handler.player); dev.blemm.essentials.integrations.BedrockAvatarLookup.load(handler.player); });
         ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); dev.blemm.essentials.commands.CommandPolicy.load(server); if (FabricLoader.getInstance().isModLoaded("miniplaceholders")) { try { dev.blemm.essentials.integrations.FabricPlaceholderIntegration.register(); } catch (Throwable error) { System.err.println("[BlemmEssentials] MiniPlaceholders integration failed: " + error.getMessage()); } } });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 
@@ -212,7 +205,7 @@ public final class BlemmEssentialsFabric implements ModInitializer {
                 return 1;
             })));
         dispatcher.register(Commands.literal("help-").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "help-")).executes(context -> {
-            context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /lobby, /setlobby, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
+            context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
             return 1;
         }));
         dispatcher.register(Commands.literal("ah").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "ah"))
