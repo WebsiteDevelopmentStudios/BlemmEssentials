@@ -488,6 +488,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     }
 
     private void selectCarbonChannel(Player player) {
+        if (!player.isOnline() || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
         String channelName = switch (player.getWorld().getName().toLowerCase(Locale.ROOT)) {
             case "lobby" -> "lobby";
             case "survival", "world" -> "survival";
@@ -495,16 +496,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
             case "oneblock" -> "oneblock";
             default -> null;
         };
-        if (channelName != null) selectCarbonChannel(player, channelName);
-    }
-
-    /** Used by FancyNpcs after it teleports a player to the Lobby. This changes chat only. */
-    public void selectCarbonLobby(Player player) {
-        selectCarbonChannel(player, "lobby");
-    }
-
-    private void selectCarbonChannel(Player player, String channelName) {
-        if (!player.isOnline() || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
+        if (channelName == null) return;
         try {
             org.bukkit.plugin.Plugin carbonPlugin = Bukkit.getPluginManager().getPlugin("Carbon");
             if (carbonPlugin == null) return;
