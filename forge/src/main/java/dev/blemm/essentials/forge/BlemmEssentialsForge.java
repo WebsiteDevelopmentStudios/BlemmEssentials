@@ -47,7 +47,6 @@ public final class BlemmEssentialsForge {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
         if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
         // Consume the compass interaction so no underlying item behavior can move the player.
-        event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
         dev.blemm.essentials.menu.CompassMenu.open(player);
     }
