@@ -29,7 +29,7 @@ import java.util.*;
 
 public class BlemmEssentials extends JavaPlugin implements Listener {
     private static final List<String> COMMANDS = List.of("money", "pay", "tpa", "tpahere", "tpaccept", "tpdeny", "rtp",
-            "sethome", "home", "delhome", "setwarp", "warp", "delwarp", "lobby", "setlobby", "help-", "admin",
+            "sethome", "home", "delhome", "setwarp", "warp", "delwarp", "help-", "admin",
             "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank");
 
     public static final String PREFIX = ChatColor.GOLD + "[Blemm] " + ChatColor.RESET;
@@ -37,7 +37,6 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     private YamlConfiguration data, warps;
     private File dataFile, warpFile;
     private boolean dirty;
-    private NamespacedKey compassKey;
     private Shop shop;
     private Integrations integrations;
     private Commands commands;
@@ -46,7 +45,6 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        compassKey = new NamespacedKey(this, "menu_compass");
         dataFile = new File(getDataFolder(), "data.yml");
         warpFile = new File(getDataFolder(), "warps.yml");
         data = YamlConfiguration.loadConfiguration(dataFile);
@@ -196,52 +194,6 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         }
     }
 
-    // ---------------------------------------------------------------- compass
-    public ItemStack makeCompass() {
-        ItemStack it = new ItemStack(Material.COMPASS);
-        ItemMeta m = it.getItemMeta();
-        m.setDisplayName(color("&6BlemmEssentials Compass"));
-        m.setLore(List.of(color("&7Right-click to open the menu.")));
-        m.getPersistentDataContainer().set(compassKey, PersistentDataType.BYTE, (byte) 1);
-        it.setItemMeta(m);
-        return it;
-    }
-
-    public boolean isMenuCompass(ItemStack it) {
-        return it != null && it.getType() == Material.COMPASS && it.hasItemMeta()
-                && it.getItemMeta().getPersistentDataContainer().has(compassKey, PersistentDataType.BYTE);
-    }
-
-    public boolean hasMenuCompass(Player p) {
-        for (ItemStack it : p.getInventory().getContents()) if (isMenuCompass(it)) return true;
-        return false;
-    }
-
-    /** The compass only opens the menu. It never moves the player (fixes the old forward-teleport). */
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onInteract(PlayerInteractEvent e) {
-        if (e.getHand() != EquipmentSlot.HAND) return;
-        if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        if (!isMenuCompass(e.getItem())) return;
-        e.setCancelled(true);
-        e.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
-        e.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
-        if (disabledHere(e.getPlayer(), "compass")) { msg(e.getPlayer(), "&cThe compass is disabled in this world."); return; }
-        openCompass(e.getPlayer());
-    }
-
-    public void openCompass(Player p) {
-        Menu m = new Menu(Menu.Type.COMPASS, null, 0, 27, color("&6BlemmEssentials"));
-        m.getInventory().setItem(10, icon(Material.EMERALD, "&aBalance", "&7" + money(balance(p.getUniqueId()))));
-        m.getInventory().setItem(11, icon(Material.CHEST, "&eShop", "&7Browse by category"));
-        m.getInventory().setItem(12, icon(Material.GOLD_INGOT, "&6Auction House", "&7Player listings"));
-        m.getInventory().setItem(13, icon(Material.RED_BED, "&cHomes", "&7List your homes"));
-        m.getInventory().setItem(14, icon(Material.ENDER_PEARL, "&5Warps", "&7List warps"));
-        m.getInventory().setItem(15, icon(Material.PLAYER_HEAD, "&bFriends", "&7List your friends"));
-        m.getInventory().setItem(16, icon(Material.NETHER_STAR, "&dLobby", "&7Go to the lobby"));
-        p.openInventory(m.getInventory());
-    }
-
     public ItemStack icon(Material mat, String name, String... lore) {
         ItemStack it = new ItemStack(mat);
         ItemMeta m = it.getItemMeta();
@@ -330,19 +282,6 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         if (e.getClickedInventory() == null || e.getClickedInventory() != e.getView().getTopInventory()) return;
         int slot = e.getSlot();
         switch (menu.type) {
-            case COMPASS -> {
-                p.closeInventory();
-                switch (slot) {
-                    case 10 -> msg(p, "Balance: &a" + money(balance(p.getUniqueId())));
-                    case 11 -> openShopCategories(p);
-                    case 12 -> openAuctions(p, 0);
-                    case 13 -> p.performCommand("home");
-                    case 14 -> p.performCommand("warp list");
-                    case 15 -> p.performCommand("friend list");
-                    case 16 -> p.performCommand("lobby");
-                    default -> { }
-                }
-            }
             case SHOP_CATEGORIES -> {
                 ItemStack it = e.getCurrentItem();
                 if (it == null || !it.hasItemMeta()) return;
@@ -416,7 +355,6 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
             data.set(base + ".balance", getConfig().getDouble("starting-balance", 100));
             data.set(base + ".name", p.getName());
             markDirty();
-            if (getConfig().getBoolean("give-compass-on-first-join", true)) p.getInventory().addItem(makeCompass());
         }
         data.set(base + ".name", p.getName());
         applyTabPrefix(p);
