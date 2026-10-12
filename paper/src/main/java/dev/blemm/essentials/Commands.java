@@ -58,9 +58,24 @@ public class Commands implements CommandExecutor, TabCompleter {
             case "shop" -> { if (!playerOnly(s)) pl.openShopCategories((Player) s); }
             case "sell" -> sell(s, a);
             case "rank" -> rank(s, a);
+            case "setup" -> setup(s, a);
             default -> { return false; }
         }
         return true;
+    }
+
+    private void setup(CommandSender sender, String[] args) {
+        if (!pl.isAdmin(sender)) { pl.msg(sender, "&cOnly an owner/operator can run setup."); return; }
+        if (args.length != 1 || !args[0].equalsIgnoreCase("lifesteal")) {
+            pl.msg(sender, "&cUsage: /setup lifesteal"); return;
+        }
+        World world = pl.lifestealWorld();
+        if (world == null) {
+            pl.msg(sender, "&cNo world named Lifesteal is loaded. Create/load that world, then run /setup lifesteal again."); return;
+        }
+        pl.msg(sender, "&eLifesteal world detected: &f" + world.getName());
+        pl.msg(sender, "&cSetup is not complete: this build does not yet isolate Lifesteal balances, auctions, or shop data.");
+        pl.msg(sender, "&7No existing player data was changed.");
     }
 
     // ------------------------------------------------------------ economy
@@ -397,7 +412,7 @@ public class Commands implements CommandExecutor, TabCompleter {
         if (a.length > 0 && a[0].equalsIgnoreCase("all")) {
             double total = 0; int count = 0;
             for (ItemStack it : p.getInventory().getStorageContents()) {
-                if (it == null || !pl.shop().sellable(it.getType()) || !plain(it)) continue;
+                if (it == null || pl.isMenuCompass(it) || !pl.shop().sellable(it.getType()) || !plain(it)) continue;
                 total += pl.shop().price(it.getType()).sell() * it.getAmount();
                 count += it.getAmount();
                 it.setAmount(0);
@@ -408,7 +423,7 @@ public class Commands implements CommandExecutor, TabCompleter {
             return;
         }
         ItemStack hand = p.getInventory().getItemInMainHand();
-        if (hand.getType().isAir() || !pl.shop().sellable(hand.getType()) || !plain(hand)) { pl.msg(p, "&cThat item cannot be sold."); return; }
+        if (pl.isMenuCompass(hand) || hand.getType().isAir() || !pl.shop().sellable(hand.getType()) || !plain(hand)) { pl.msg(p, "&cThat item cannot be sold."); return; }
         sellMaterial(p, hand.getType(), hand.getAmount());
     }
 
@@ -423,6 +438,7 @@ public class Commands implements CommandExecutor, TabCompleter {
                 Double price = parseAmount(p, a[1]);
                 if (price == null) return;
                 ItemStack hand = p.getInventory().getItemInMainHand();
+                if (pl.isMenuCompass(hand)) { pl.msg(p, "&cThe navigation compass cannot be auctioned."); return; }
                 if (hand.getType().isAir()) { pl.msg(p, "&cHold an item."); return; }
                 int amt = hand.getAmount();
                 if (a.length > 2) { try { amt = Math.min(amt, Math.max(1, Integer.parseInt(a[2]))); } catch (NumberFormatException e) { pl.msg(p, "&cInvalid amount."); return; } }
