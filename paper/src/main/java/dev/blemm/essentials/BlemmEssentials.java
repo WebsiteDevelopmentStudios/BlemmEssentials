@@ -220,7 +220,11 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         if (e.getHand() != EquipmentSlot.HAND) return;
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (!isMenuCompass(e.getItem())) return;
+        // Explicitly deny vanilla item/block use as well as cancelling the event. This compass is a menu trigger,
+        // not a vanilla compass interaction, and must never fall through to normal item behavior.
         e.setCancelled(true);
+        e.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+        e.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
         if (!isSurvivalWorld(e.getPlayer())) {
             msg(e.getPlayer(), "&cThe BlemmEssentials compass only works in Survival.");
             return;
@@ -458,14 +462,14 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         if (isSurvivalWorld(e.getPlayer())) giveCompassIfMissing(e.getPlayer());
 
         Player player = e.getPlayer();
-                String channelName = switch (player.getWorld().getName()) {
+        String channelName = switch (player.getWorld().getName()) {
                     case "Lobby" -> "lobby";
                     case "Survival" -> "survival";
                     case "Lifesteal" -> "lifesteal";
                     case "Oneblock" -> "oneblock";
                     default -> null;
                 };
-                if (channelName == null || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
+        if (channelName == null || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
         
                 // Use reflection so Carbon remains a genuinely optional dependency.
                 try {
