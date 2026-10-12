@@ -91,55 +91,6 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         return out;
     }
 
-    // ---------------------------------------------------------------- optional Carbon chat integration
-    @EventHandler
-    public void onWorldChange(PlayerChangedWorldEvent event) {
-        Player player = event.getPlayer();
-        String channelName = switch (player.getWorld().getName()) {
-            case "Lobby" -> "lobby";
-            case "Survival" -> "survival";
-            case "Lifesteal" -> "lifesteal";
-            case "Oneblock" -> "oneblock";
-            default -> null;
-        };
-        if (channelName == null || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
-
-        // Use reflection so Carbon remains a genuinely optional dependency.
-        try {
-            org.bukkit.plugin.Plugin carbonPlugin = Bukkit.getPluginManager().getPlugin("Carbon");
-            if (carbonPlugin == null) return;
-            ClassLoader loader = carbonPlugin.getClass().getClassLoader();
-            Class<?> providerClass = Class.forName("net.draycia.carbon.api.CarbonChatProvider", true, loader);
-            Object carbon = providerClass.getMethod("carbonChat").invoke(null);
-            Object registry = carbon.getClass().getMethod("channelRegistry").invoke(carbon);
-            Class<?> keyClass = Class.forName("net.kyori.adventure.key.Key", true, loader);
-            Object key = keyClass.getMethod("key", String.class, String.class).invoke(null, "carbon", channelName);
-            Object channel = registry.getClass().getMethod("channel", keyClass).invoke(registry, key);
-            if (channel == null) {
-                getLogger().warning("Carbon channel 'carbon:" + channelName + "' was not found; leaving " + player.getName() + "'s selected channel unchanged.");
-                return;
-            }
-
-            Object userManager = carbon.getClass().getMethod("userManager").invoke(carbon);
-            Object future = userManager.getClass().getMethod("user", UUID.class).invoke(userManager, player.getUniqueId());
-            if (future instanceof java.util.concurrent.CompletableFuture<?> userFuture) {
-                userFuture.thenAccept(carbonPlayer -> Bukkit.getScheduler().runTask(this, () -> {
-                    if (!player.isOnline()) return;
-                    try {
-                        java.lang.reflect.Method selectedChannel = java.util.Arrays.stream(carbonPlayer.getClass().getMethods())
-                            .filter(method -> method.getName().equals("selectedChannel") && method.getParameterCount() == 1)
-                            .findFirst().orElseThrow();
-                        selectedChannel.invoke(carbonPlayer, channel);
-                    } catch (ReflectiveOperationException | RuntimeException exception) {
-                        getLogger().warning("Could not select Carbon channel 'carbon:" + channelName + "' for " + player.getName() + ": " + exception.getMessage());
-                    }
-                }));
-            }
-        } catch (ReflectiveOperationException | RuntimeException exception) {
-            getLogger().warning("Carbon chat integration could not select channel 'carbon:" + channelName + "': " + exception.getMessage());
-        }
-    }
-
     // ---------------------------------------------------------------- persistence
     public YamlConfiguration data() { return data; }
     public YamlConfiguration warps() { return warps; }
@@ -505,6 +456,51 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent e) {
         if (isSurvivalWorld(e.getPlayer())) giveCompassIfMissing(e.getPlayer());
+
+        Player player = e.getPlayer();
+                String channelName = switch (player.getWorld().getName()) {
+                    case "Lobby" -> "lobby";
+                    case "Survival" -> "survival";
+                    case "Lifesteal" -> "lifesteal";
+                    case "Oneblock" -> "oneblock";
+                    default -> null;
+                };
+                if (channelName == null || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
+        
+                // Use reflection so Carbon remains a genuinely optional dependency.
+                try {
+                    org.bukkit.plugin.Plugin carbonPlugin = Bukkit.getPluginManager().getPlugin("Carbon");
+                    if (carbonPlugin == null) return;
+                    ClassLoader loader = carbonPlugin.getClass().getClassLoader();
+                    Class<?> providerClass = Class.forName("net.draycia.carbon.api.CarbonChatProvider", true, loader);
+                    Object carbon = providerClass.getMethod("carbonChat").invoke(null);
+                    Object registry = carbon.getClass().getMethod("channelRegistry").invoke(carbon);
+                    Class<?> keyClass = Class.forName("net.kyori.adventure.key.Key", true, loader);
+                    Object key = keyClass.getMethod("key", String.class, String.class).invoke(null, "carbon", channelName);
+                    Object channel = registry.getClass().getMethod("channel", keyClass).invoke(registry, key);
+                    if (channel == null) {
+                        getLogger().warning("Carbon channel 'carbon:" + channelName + "' was not found; leaving " + player.getName() + "'s selected channel unchanged.");
+                        return;
+                    }
+        
+                    Object userManager = carbon.getClass().getMethod("userManager").invoke(carbon);
+                    Object future = userManager.getClass().getMethod("user", UUID.class).invoke(userManager, player.getUniqueId());
+                    if (future instanceof java.util.concurrent.CompletableFuture<?> userFuture) {
+                        userFuture.thenAccept(carbonPlayer -> Bukkit.getScheduler().runTask(this, () -> {
+                            if (!player.isOnline()) return;
+                            try {
+                                java.lang.reflect.Method selectedChannel = java.util.Arrays.stream(carbonPlayer.getClass().getMethods())
+                                    .filter(method -> method.getName().equals("selectedChannel") && method.getParameterCount() == 1)
+                                    .findFirst().orElseThrow();
+                                selectedChannel.invoke(carbonPlayer, channel);
+                            } catch (ReflectiveOperationException | RuntimeException exception) {
+                                getLogger().warning("Could not select Carbon channel 'carbon:" + channelName + "' for " + player.getName() + ": " + exception.getMessage());
+                            }
+                        }));
+                    }
+                } catch (ReflectiveOperationException | RuntimeException exception) {
+                    getLogger().warning("Carbon chat integration could not select channel 'carbon:" + channelName + "': " + exception.getMessage());
+                }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
