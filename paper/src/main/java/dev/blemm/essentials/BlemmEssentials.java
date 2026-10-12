@@ -538,6 +538,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     }
 
     private void applyCarbonChannel(Player player, Object carbonPlayer, Object channel, String channelName) {
+        if (carbonPlayer instanceof Optional<?> optional) carbonPlayer = optional.orElse(null);
         if (!player.isOnline() || carbonPlayer == null) return;
         try {
             // Carbon API versions have exposed this setter under different names.
