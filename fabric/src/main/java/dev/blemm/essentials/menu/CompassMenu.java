@@ -24,7 +24,6 @@ public final class CompassMenu {
     public static ItemStack makeCompass() {
         ItemStack stack = new ItemStack(Items.COMPASS);
         stack.set(DataComponents.CUSTOM_NAME, Component.literal("BlemmEssentials Navigation"));
-        stack.enchant(net.minecraft.core.registries.BuiltInRegistries.ENCHANTMENT.getHolderOrThrow(net.minecraft.world.item.enchantment.Enchantments.LUCK_OF_THE_SEA), 1);
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(MARKER, true);
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
