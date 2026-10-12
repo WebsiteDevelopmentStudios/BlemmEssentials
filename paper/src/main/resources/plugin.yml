@@ -80,8 +80,11 @@ commands:
     description: Sell items.
     usage: "/sell [all]"
   setup:
-    description: Configure optional game-mode support.
-    usage: "/setup lifesteal"
+    description: Configure optional game-mode support and detect Carbon API compatibility.
+    usage: "/setup <lifesteal|update>"
+  blemmchat:
+    description: Switch an online player's Carbon Chat channel through the Carbon API.
+    usage: "/blemmchat set <online-player> <channel>"
   rank:
     description: View or set ranks.
     usage: "/rank [list|info [player]|set <player> <rank>]"
@@ -92,4 +95,7 @@ permissions:
     default: true
   blemmessentials.bypass.worlds:
     description: Ignore per-world command blocking.
+    default: op
+  blemmessentials.chat.set:
+    description: Switch another player's Carbon Chat channel.
     default: op
