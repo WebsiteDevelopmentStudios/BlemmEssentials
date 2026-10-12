@@ -42,6 +42,3 @@ After first start, edit `blemmessentials/disabled-commands.properties`. Use dime
 Auction listings now serialize the complete item stack through Minecraft's registry-aware item codec, preserving custom names, lore, enchantments, and other item components across server restarts. Existing listings from older versions remain readable and fall back to plain item stacks.
 
 
-### Menu compass
-
-A BlemmEssentials Compass is added to a player's inventory when they join if they do not already have one. Right-clicking it opens a vanilla utility menu for balance, shop, auctions, homes, warps, friends, and lobby. The compass never teleports the player by itself. The `compass` entry in `disabled-commands.properties` can disable it for a dimension.
