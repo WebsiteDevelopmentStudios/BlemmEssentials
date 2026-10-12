@@ -38,14 +38,7 @@ public final class BlemmEssentialsForge {
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { dev.blemm.essentials.ranks.RankPresentation.apply(player); dev.blemm.essentials.menu.CompassMenu.onJoin(player); }
-    }
-
-    @SubscribeEvent
-    public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
-        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
-        if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
-        dev.blemm.essentials.menu.CompassMenu.open(player);
+        if (event.getEntity() instanceof ServerPlayer player) { dev.blemm.essentials.ranks.RankPresentation.apply(player); }
     }
 
     @SubscribeEvent
@@ -199,7 +192,7 @@ public final class BlemmEssentialsForge {
                 return 1;
             })));
         dispatcher.register(Commands.literal("help-").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "help-")).executes(context -> {
-            context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /lobby, /setlobby, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
+            context.getSource().sendSuccess(() -> Component.literal("BlemmEssentials: /balance, /pay, /shop, /sell, /ah, /sethome, /home, /delhome, /setwarp, /warp, /delwarp, /rtp, /tpa, /tpahere, /tpaccept, /tpdeny, /rank"), false);
             return 1;
         }));
         dispatcher.register(Commands.literal("ah").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "ah"))
