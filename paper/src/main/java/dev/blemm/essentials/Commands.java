@@ -59,6 +59,7 @@ public class Commands implements CommandExecutor, TabCompleter {
             case "sell" -> sell(s, a);
             case "rank" -> rank(s, a);
             case "setup" -> setup(s, a);
+            case "blemmchat" -> blemmchat(s, a);
             default -> { return false; }
         }
         return true;
@@ -66,8 +67,23 @@ public class Commands implements CommandExecutor, TabCompleter {
 
     private void setup(CommandSender sender, String[] args) {
         if (!pl.isAdmin(sender)) { pl.msg(sender, "&cOnly an owner/operator can run setup."); return; }
-        if (args.length != 1 || !args[0].equalsIgnoreCase("lifesteal")) {
-            pl.msg(sender, "&cUsage: /setup lifesteal"); return;
+        if (args.length != 1) {
+            pl.msg(sender, "&cUsage: /setup <lifesteal|update>"); return;
+        }
+        if (args[0].equalsIgnoreCase("update")) {
+            CarbonChatBridge.Check check = pl.carbonChat().check("lobby");
+            pl.msg(sender, "&eCarbon Chat version: &f" + check.version());
+            pl.msg(sender, (check.compatible() ? "&a" : "&c") + check.detail());
+            if (check.compatible()) {
+                pl.msg(sender, "&aCarbon API integration is ready. Use /blemmchat set <player> lobby to switch a player's channel.");
+                pl.msg(sender, "&7Carbon channel .conf files were not modified.");
+            } else {
+                pl.msg(sender, "&cNo channel changes were made. Fix the issue above, then run /setup update again.");
+            }
+            return;
+        }
+        if (!args[0].equalsIgnoreCase("lifesteal")) {
+            pl.msg(sender, "&cUsage: /setup <lifesteal|update>"); return;
         }
         World world = pl.lifestealWorld();
         if (world == null) {
@@ -76,6 +92,23 @@ public class Commands implements CommandExecutor, TabCompleter {
         pl.msg(sender, "&eLifesteal world detected: &f" + world.getName());
         pl.msg(sender, "&cSetup is not complete: this build does not yet isolate Lifesteal balances, auctions, or shop data.");
         pl.msg(sender, "&7No existing player data was changed.");
+    }
+
+    private void blemmchat(CommandSender sender, String[] args) {
+        if (!pl.isAdmin(sender)) { pl.msg(sender, "&cOnly an owner/operator can use this command."); return; }
+        if (args.length != 3 || !args[0].equalsIgnoreCase("set")) {
+            pl.msg(sender, "&cUsage: /blemmchat set <online-player> <channel>"); return;
+        }
+        Player target = Bukkit.getPlayerExact(args[1]);
+        String channel = args[2];
+        if (target == null) {
+            pl.msg(sender, "&cUsage: /blemmchat set <online-player> <channel>");
+            return;
+        }
+        pl.carbonChat().switchChannel(target, channel, message -> {
+            pl.msg(sender, message.startsWith("Switched ") ? "&a" + message : "&c" + message);
+            if (message.startsWith("Switched ")) pl.msg(target, "&aYour chat channel is now &f" + channel + "&a.");
+        });
     }
 
     private void shopCommand(CommandSender sender, String[] args) {
