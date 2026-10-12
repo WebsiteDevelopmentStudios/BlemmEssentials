@@ -79,3 +79,10 @@ GitHub Actions assembles `BlemmEssentials-all-platforms.zip` only after all four
 
 
 Auction listings now serialize the complete item stack through Minecraft's registry-aware item codec, preserving custom names, lore, enchantments, and other item components across server restarts. Existing listings from older versions remain readable and fall back to plain item stacks.
+
+
+## Survival compass and world restrictions
+
+Paper gives players a tagged, enchanted BlemmEssentials navigation compass in worlds named Survival or world. It opens the navigation menu only in those worlds and is excluded from the built-in bulk sell and auction-listing flows. Normal compasses are not marked as navigation items. BlemmEssentials commands are blocked for players in other worlds, except /setup lifesteal.
+
+If a loaded world named Lifesteal is detected, the server console warns operators to run /setup lifesteal. In this build, the setup command validates that world and explicitly reports that independent Lifesteal balances, auctions, and shop storage are not implemented yet; it does not falsely mark setup as complete. Do not treat this as full Lifesteal isolation until a dedicated data/command backend is added.
