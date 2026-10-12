@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import dev.blemm.essentials.locations.LocationCommands;
@@ -38,7 +39,16 @@ public final class BlemmEssentialsForge {
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { dev.blemm.essentials.ranks.RankPresentation.apply(player); }
+        if (event.getEntity() instanceof ServerPlayer player) { dev.blemm.essentials.ranks.RankPresentation.apply(player); dev.blemm.essentials.menu.CompassMenu.onJoin(player); }
+    }
+
+    @SubscribeEvent
+    public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
+        // Consume the compass interaction so no underlying item behavior can move the player.
+        event.setCancellationResult(InteractionResult.SUCCESS);
+        dev.blemm.essentials.menu.CompassMenu.open(player);
     }
 
     @SubscribeEvent

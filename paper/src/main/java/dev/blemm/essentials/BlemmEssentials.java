@@ -17,6 +17,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -30,27 +33,40 @@ import java.util.*;
 public class BlemmEssentials extends JavaPlugin implements Listener {
     private static final List<String> COMMANDS = List.of("money", "pay", "tpa", "tpahere", "tpaccept", "tpdeny", "rtp",
             "sethome", "home", "delhome", "setwarp", "warp", "delwarp", "help-", "admin",
-            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank");
+            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank", "setup", "blemmchat");
 
     public static final String PREFIX = ChatColor.GOLD + "[Blemm] " + ChatColor.RESET;
 
     private YamlConfiguration data, warps;
     private File dataFile, warpFile;
     private boolean dirty;
+    private NamespacedKey compassKey;
     private Shop shop;
     private Integrations integrations;
+    private CarbonChatBridge carbonChat;
     private Commands commands;
+    private File pricesFolder;
+    private String activeShopPreset = "shop";
 
     // ---------------------------------------------------------------- lifecycle
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        compassKey = new NamespacedKey(this, "menu_compass");
         dataFile = new File(getDataFolder(), "data.yml");
         warpFile = new File(getDataFolder(), "warps.yml");
         data = YamlConfiguration.loadConfiguration(dataFile);
         warps = YamlConfiguration.loadConfiguration(warpFile);
         integrations = new Integrations(this);
-        shop = new Shop(getConfig().getConfigurationSection("shop"));
+        carbonChat = new CarbonChatBridge(this);
+        pricesFolder = new File(getDataFolder(), "prices");
+        try {
+            Shop.ensurePresetFiles(pricesFolder);
+            activeShopPreset = Shop.readActivePreset(pricesFolder);
+        } catch (IOException ex) {
+            getLogger().severe("Could not initialize shop price presets: " + ex.getMessage());
+        }
+        shop = new Shop(getConfig().getConfigurationSection("shop"), pricesFolder, activeShopPreset);
         commands = new Commands(this);
         for (String name : COMMANDS) {
             PluginCommand pc = getCommand(name);
@@ -61,6 +77,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskTimer(this, this::expireAuctions, 20L * 60, 20L * 60);
         Bukkit.getScheduler().runTaskTimer(this, this::flush, 100L, 100L);
         logRecommendations();
+        warnLifestealSetup();
         getLogger().info("Shop loaded with " + shop.categories().stream().mapToInt(c -> shop.items(c).size()).sum() + " items.");
     }
 
@@ -68,7 +85,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
 
     public void reload() {
         reloadConfig();
-        shop = new Shop(getConfig().getConfigurationSection("shop"));
+        shop = new Shop(getConfig().getConfigurationSection("shop"), pricesFolder, activeShopPreset);
     }
 
     private void logRecommendations() {
@@ -89,7 +106,20 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     public YamlConfiguration data() { return data; }
     public YamlConfiguration warps() { return warps; }
     public Shop shop() { return shop; }
+    public File pricesFolder() { return pricesFolder; }
+    public String activeShopPreset() { return activeShopPreset; }
+    public boolean activateShopPreset(String name) {
+        try {
+            Shop.activatePreset(pricesFolder, name);
+            activeShopPreset = Shop.safePresetName(name);
+            shop = new Shop(getConfig().getConfigurationSection("shop"), pricesFolder, activeShopPreset);
+            return true;
+        } catch (IOException | IllegalArgumentException ex) {
+            return false;
+        }
+    }
     public Integrations integrations() { return integrations; }
+    public CarbonChatBridge carbonChat() { return carbonChat; }
     public void markDirty() { dirty = true; }
 
     private void flush() {
@@ -171,6 +201,72 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         p.teleport(l);
     }
 
+    // ---------------------------------------------------------------- Survival world policy and Lifesteal detection
+    public boolean isSurvivalWorld(World world) {
+        String name = world.getName();
+        return name.equalsIgnoreCase("Survival") || name.equalsIgnoreCase("world");
+    }
+    public boolean isSurvivalWorld(Player player) { return isSurvivalWorld(player.getWorld()); }
+    public World lifestealWorld() {
+        for (World world : Bukkit.getWorlds()) if (world.getName().equalsIgnoreCase("Lifesteal")) return world;
+        return null;
+    }
+    private void warnLifestealSetup() {
+        if (lifestealWorld() != null && !getConfig().getBoolean("lifesteal.setup-complete", false))
+            getLogger().warning("A Lifesteal world was detected. An operator must run /setup lifesteal. Independent Lifesteal economy/auction/shop support is not yet available.");
+    }
+    public boolean isMenuCompass(ItemStack it) {
+        return it != null && it.getType() == Material.COMPASS && it.hasItemMeta()
+            && it.getItemMeta().getPersistentDataContainer().has(compassKey, PersistentDataType.BYTE);
+    }
+    public ItemStack makeCompass() {
+        ItemStack it = new ItemStack(Material.COMPASS);
+        ItemMeta meta = it.getItemMeta();
+        meta.setDisplayName(color("&6BlemmEssentials Navigation"));
+        meta.setLore(List.of(color("&7Right-click to open server navigation."), color("&8Only works in Survival.")));
+        meta.getPersistentDataContainer().set(compassKey, PersistentDataType.BYTE, (byte) 1);
+        meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        it.setItemMeta(meta);
+        return it;
+    }
+    public boolean hasMenuCompass(Player p) {
+        for (ItemStack it : p.getInventory().getContents()) if (isMenuCompass(it)) return true;
+        return false;
+    }
+    public void giveCompassIfMissing(Player p) {
+        if (!isSurvivalWorld(p) || hasMenuCompass(p)) return;
+        for (ItemStack leftover : p.getInventory().addItem(makeCompass()).values())
+            p.getWorld().dropItemNaturally(p.getLocation(), leftover);
+    }
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
+    public void onCompassUse(PlayerInteractEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND) return;
+        if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (!isMenuCompass(e.getItem())) return;
+        // Explicitly deny vanilla item/block use as well as cancelling the event. This compass is a menu trigger,
+        // not a vanilla compass interaction, and must never fall through to normal item behavior.
+        e.setCancelled(true);
+        e.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+        e.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+        if (!isSurvivalWorld(e.getPlayer())) {
+            msg(e.getPlayer(), "&cThe BlemmEssentials compass only works in Survival.");
+            return;
+        }
+        openCompass(e.getPlayer());
+    }
+    public void openCompass(Player p) {
+        if (!isSurvivalWorld(p)) { msg(p, "&cNavigation is only available in Survival."); return; }
+        Menu m = new Menu(Menu.Type.COMPASS, null, 0, 27, color("&6BlemmEssentials Navigation"));
+        m.getInventory().setItem(10, icon(Material.EMERALD, "&aBalance", "&7" + money(balance(p.getUniqueId()))));
+        m.getInventory().setItem(11, icon(Material.CHEST, "&eShop", "&7Browse categories"));
+        m.getInventory().setItem(12, icon(Material.GOLD_INGOT, "&6Auction House", "&7Player listings"));
+        m.getInventory().setItem(13, icon(Material.RED_BED, "&cHomes", "&7Your saved homes"));
+        m.getInventory().setItem(14, icon(Material.ENDER_PEARL, "&5Warps", "&7Available warps"));
+        m.getInventory().setItem(15, icon(Material.PLAYER_HEAD, "&bFriends", "&7Your friends"));
+        p.openInventory(m.getInventory());
+    }
+
     // ---------------------------------------------------------------- per-world command blocking
     public boolean disabledHere(Player p, String key) {
         if (isAdmin(p) || p.hasPermission("blemmessentials.bypass.worlds")) return false;
@@ -188,6 +284,11 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         if (raw.contains(":")) raw = raw.substring(raw.indexOf(':') + 1);
         PluginCommand pc = Bukkit.getPluginCommand(raw);
         if (pc == null || pc.getPlugin() != this) return;
+        if (!isSurvivalWorld(e.getPlayer()) && !raw.equalsIgnoreCase("setup") && !raw.equalsIgnoreCase("blemmchat")) {
+            e.setCancelled(true);
+            msg(e.getPlayer(), "&cBlemmEssentials commands are only available in Survival.");
+            return;
+        }
         if (disabledHere(e.getPlayer(), pc.getName())) {
             e.setCancelled(true);
             msg(e.getPlayer(), "&cThis command is disabled in this world.");
@@ -282,6 +383,21 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         if (e.getClickedInventory() == null || e.getClickedInventory() != e.getView().getTopInventory()) return;
         int slot = e.getSlot();
         switch (menu.type) {
+            case COMPASS -> {
+                String command = switch (slot) {
+                    case 10 -> "money";
+                    case 11 -> "shop";
+                    case 12 -> "ah";
+                    case 13 -> "home";
+                    case 14 -> "warp";
+                    case 15 -> "friend list";
+                    default -> null;
+                };
+                if (command != null) {
+                    p.closeInventory();
+                    Bukkit.dispatchCommand(p, command);
+                }
+            }
             case SHOP_CATEGORIES -> {
                 ItemStack it = e.getCurrentItem();
                 if (it == null || !it.hasItemMeta()) return;
@@ -359,9 +475,16 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         data.set(base + ".name", p.getName());
         applyTabPrefix(p);
         integrations.loadBedrockSkin(p);
+        giveCompassIfMissing(p);
         if (isAdmin(p)) for (String line : missingRecommended()) msg(p, "&eRecommended: " + line);
         List<?> mail = data.getList("auctions.mail." + p.getUniqueId());
         if (mail != null && !mail.isEmpty()) msg(p, "&eYou have unclaimed auction items. Use &f/ah claim&e.");
+    }
+
+    @EventHandler
+    public void onWorldChange(PlayerChangedWorldEvent e) {
+        Player player = e.getPlayer();
+        if (isSurvivalWorld(player)) giveCompassIfMissing(player);
     }
 
     @EventHandler(priority = EventPriority.HIGH)

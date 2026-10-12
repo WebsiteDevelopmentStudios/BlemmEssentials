@@ -38,7 +38,14 @@ public final class BlemmEssentialsFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> { dev.blemm.essentials.ranks.RankPresentation.apply(handler.player); dev.blemm.essentials.integrations.BedrockAvatarLookup.load(handler.player); });
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> { dev.blemm.essentials.ranks.RankPresentation.apply(handler.player); dev.blemm.essentials.integrations.BedrockAvatarLookup.load(handler.player); dev.blemm.essentials.menu.CompassMenu.onJoin(handler.player); });
+        UseItemCallback.EVENT.register((player, level, hand) -> {
+            if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
+            ItemStack held = player.getItemInHand(hand);
+            if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(held)) return InteractionResult.PASS;
+            dev.blemm.essentials.menu.CompassMenu.open(serverPlayer);
+            return InteractionResult.SUCCESS;
+        });
         ServerLifecycleEvents.SERVER_STARTED.register(server -> { ECONOMY.load(server); LocationCommands.load(server); AuctionStore.load(server); RankStore.load(server); FriendStore.load(server); dev.blemm.essentials.shop.ShopPrices.load(server); dev.blemm.essentials.integrations.DiscordWebhook.load(server); dev.blemm.essentials.commands.CommandPolicy.load(server); if (FabricLoader.getInstance().isModLoaded("miniplaceholders")) { try { dev.blemm.essentials.integrations.FabricPlaceholderIntegration.register(); } catch (Throwable error) { System.err.println("[BlemmEssentials] MiniPlaceholders integration failed: " + error.getMessage()); } } });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { ECONOMY.save(server); LocationCommands.save(server); AuctionStore.save(server); RankStore.save(server); FriendStore.save(server); });
 

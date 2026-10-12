@@ -6,7 +6,7 @@ import org.bukkit.inventory.InventoryHolder;
 
 /** Inventory holder that tags every BlemmEssentials GUI. */
 public class Menu implements InventoryHolder {
-    public enum Type { SHOP_CATEGORIES, SHOP_ITEMS, AUCTIONS }
+    public enum Type { COMPASS, SHOP_CATEGORIES, SHOP_ITEMS, AUCTIONS }
 
     public final Type type;
     public final String category;
