@@ -239,7 +239,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         for (ItemStack leftover : p.getInventory().addItem(makeCompass()).values())
             p.getWorld().dropItemNaturally(p.getLocation(), leftover);
     }
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onCompassUse(PlayerInteractEvent e) {
         if (e.getHand() != EquipmentSlot.HAND) return;
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
