@@ -154,7 +154,7 @@ public class Shop {
             default -> 10;
         };
         if (n.contains("NETHERITE")) {
-            base = n.contains("BLOCK") ? 58500 : n.contains("INGOT") ? 6500 : n.contains("SCRAP") ? 2800 : n.contains("SMITHING_TEMPLATE") ? 4500 :
+            base = n.contains("BLOCK") ? 8500 : n.contains("INGOT") ? 6500 : n.contains("SCRAP") ? 4500 : n.contains("SMITHING_TEMPLATE") ? 4500 :
                     (n.contains("SWORD") || n.contains("PICKAXE") || n.contains("AXE") || n.contains("SHOVEL")
                     || n.contains("HOE") || n.contains("HELMET") || n.contains("CHESTPLATE") || n.contains("LEGGINGS")
                     || n.contains("BOOTS")) ? 8500 : 1200;
