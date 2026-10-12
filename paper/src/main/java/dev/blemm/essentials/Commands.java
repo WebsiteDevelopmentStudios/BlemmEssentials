@@ -55,7 +55,7 @@ public class Commands implements CommandExecutor, TabCompleter {
             case "homefriends" -> homeFriends(s, a);
             case "homevisit" -> homeVisit(s, a);
             case "ah" -> ah(s, a);
-            case "shop" -> { if (!playerOnly(s)) pl.openShopCategories((Player) s); }
+            case "shop" -> shopCommand(s, a);
             case "sell" -> sell(s, a);
             case "rank" -> rank(s, a);
             case "setup" -> setup(s, a);
@@ -76,6 +76,36 @@ public class Commands implements CommandExecutor, TabCompleter {
         pl.msg(sender, "&eLifesteal world detected: &f" + world.getName());
         pl.msg(sender, "&cSetup is not complete: this build does not yet isolate Lifesteal balances, auctions, or shop data.");
         pl.msg(sender, "&7No existing player data was changed.");
+    }
+
+    private void shopCommand(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            if (!playerOnly(sender)) pl.openShopCategories((Player) sender);
+            return;
+        }
+        if (!args[0].equalsIgnoreCase("preset")) {
+            pl.msg(sender, "&cUsage: /shop [preset [name]]");
+            return;
+        }
+        if (!pl.isAdmin(sender)) {
+            pl.msg(sender, "&cOnly an owner/operator can change the active shop preset.");
+            return;
+        }
+        if (args.length == 1) {
+            pl.msg(sender, "&eAvailable shop presets: &f" + String.join(", ", Shop.listPresetNames(pl.pricesFolder())));
+            pl.msg(sender, "&7Active preset: &f" + pl.activeShopPreset());
+            pl.msg(sender, "&7Use /shop preset <name> to switch presets.");
+            return;
+        }
+        if (args.length > 2) {
+            pl.msg(sender, "&cUsage: /shop preset <name>");
+            return;
+        }
+        if (!pl.activateShopPreset(args[1])) {
+            pl.msg(sender, "&cCould not load that preset. Check its name and make sure prices/" + args[1] + ".txt exists.");
+            return;
+        }
+        pl.msg(sender, "&aShop preset changed to &f" + pl.activeShopPreset() + "&a.");
     }
 
     // ------------------------------------------------------------ economy
@@ -509,9 +539,12 @@ public class Commands implements CommandExecutor, TabCompleter {
                 case "ah" -> out.addAll(List.of("sell", "buy", "cancel", "claim"));
                 case "rank" -> out.addAll(List.of("list", "info", "set"));
                 case "sell" -> out.add("all");
+                case "shop" -> out.add("preset");
                 case "money", "pay", "tpa", "tpahere", "tpaccept", "tpdeny", "homevisit" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
                 default -> { }
             }
+        } else if (a.length == 2 && n.equals("shop") && a[0].equalsIgnoreCase("preset")) {
+            out.addAll(Shop.listPresetNames(pl.pricesFolder()));
         } else if (a.length == 2 && n.equals("rank") && a[0].equalsIgnoreCase("set")) {
             Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
         } else if (a.length == 3 && n.equals("rank") && a[0].equalsIgnoreCase("set") && pl.ranks() != null) {
