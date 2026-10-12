@@ -46,9 +46,6 @@ public class Shop {
             ConfigurationSection ov = items == null ? null : items.getConfigurationSection(m.name());
             if (ov != null && ov.getString("category") != null) cat = ov.getString("category");
             Price price = presetPrices.getOrDefault(m.name(), generatedPrice(m));
-            if (ov != null && (ov.contains("buy") || ov.contains("sell"))) {
-                price = new Price(ov.getDouble("buy", price.buy()), ov.getDouble("sell", price.sell()));
-            }
             if (ov != null && ov.getString("name") != null) names.put(m, ov.getString("name"));
             byCategory.computeIfAbsent(cat, k -> new ArrayList<>()).add(m);
             prices.put(m, price);
