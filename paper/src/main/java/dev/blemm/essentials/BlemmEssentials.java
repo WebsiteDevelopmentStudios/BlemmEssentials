@@ -33,7 +33,7 @@ import java.util.*;
 public class BlemmEssentials extends JavaPlugin implements Listener {
     private static final List<String> COMMANDS = List.of("money", "pay", "tpa", "tpahere", "tpaccept", "tpdeny", "rtp",
             "sethome", "home", "delhome", "setwarp", "warp", "delwarp", "help-", "admin",
-            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank", "setup");
+            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank", "setup", "lobby");
 
     public static final String PREFIX = ChatColor.GOLD + "[Blemm] " + ChatColor.RESET;
 
@@ -488,7 +488,6 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     }
 
     private void selectCarbonChannel(Player player) {
-        if (!player.isOnline() || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
         String channelName = switch (player.getWorld().getName().toLowerCase(Locale.ROOT)) {
             case "lobby" -> "lobby";
             case "survival", "world" -> "survival";
@@ -496,7 +495,16 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
             case "oneblock" -> "oneblock";
             default -> null;
         };
-        if (channelName == null) return;
+        if (channelName != null) selectCarbonChannel(player, channelName);
+    }
+
+    /** Used by FancyNpcs after it teleports a player to the Lobby. This changes chat only. */
+    public void selectCarbonLobby(Player player) {
+        selectCarbonChannel(player, "lobby");
+    }
+
+    private void selectCarbonChannel(Player player, String channelName) {
+        if (!player.isOnline() || !Bukkit.getPluginManager().isPluginEnabled("Carbon")) return;
         try {
             org.bukkit.plugin.Plugin carbonPlugin = Bukkit.getPluginManager().getPlugin("Carbon");
             if (carbonPlugin == null) return;
