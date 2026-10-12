@@ -37,16 +37,19 @@ public final class CarbonChatBridge {
         try {
             Object api = carbonClass("net.draycia.carbon.api.CarbonChatProvider", carbon)
                     .getMethod("carbonChat").invoke(null);
-            Object registry = api.getClass().getMethod("channelRegistry").invoke(api);
-            Set<?> keys = (Set<?>) registry.getClass().getMethod("keys").invoke(registry);
+            Class<?> carbonChatType = carbonClass("net.draycia.carbon.api.CarbonChat", carbon);
+            Object registry = carbonChatType.getMethod("channelRegistry").invoke(api);
+            Class<?> registryType = carbonClass("net.draycia.carbon.api.channels.ChannelRegistry", carbon);
+            Set<?> keys = (Set<?>) registryType.getMethod("keys").invoke(registry);
             boolean found = keys.stream().anyMatch(k -> {
                 try {
-                    String value = String.valueOf(k.getClass().getMethod("value").invoke(k));
+                    String value = String.valueOf(carbonClass("net.kyori.adventure.key.Key", carbon).getMethod("value").invoke(k));
                     return value.equalsIgnoreCase(channelName) || value.equalsIgnoreCase("global:" + channelName);
                 } catch (ReflectiveOperationException ignored) { return false; }
             });
-            Object manager = api.getClass().getMethod("userManager").invoke(api);
-            Method user = findMethod(manager.getClass(), "user", UUID.class);
+            Object manager = carbonChatType.getMethod("userManager").invoke(api);
+            Class<?> userManagerType = carbonClass("net.draycia.carbon.api.users.UserManager", carbon);
+            Method user = findMethod(userManagerType, "user", UUID.class);
             if (user == null) return new Check(true, false, version, "Carbon API found, but UserManager.user(UUID) is unavailable.");
             Class<?> carbonPlayer = carbonClass("net.draycia.carbon.api.users.CarbonPlayer", carbon);
             boolean setter = false;
@@ -65,13 +68,15 @@ public final class CarbonChatBridge {
         try {
             Object api = carbonClass("net.draycia.carbon.api.CarbonChatProvider", carbon)
                     .getMethod("carbonChat").invoke(null);
-            Object registry = api.getClass().getMethod("channelRegistry").invoke(api);
+            Class<?> carbonChatType = carbonClass("net.draycia.carbon.api.CarbonChat", carbon);
+            Object registry = carbonChatType.getMethod("channelRegistry").invoke(api);
             Object channel = null;
-            Set<?> keys = (Set<?>) registry.getClass().getMethod("keys").invoke(registry);
+            Class<?> registryType = carbonClass("net.draycia.carbon.api.channels.ChannelRegistry", carbon);
+            Set<?> keys = (Set<?>) registryType.getMethod("keys").invoke(registry);
             for (Object key : keys) {
-                String value = String.valueOf(key.getClass().getMethod("value").invoke(key));
+                String value = String.valueOf(carbonClass("net.kyori.adventure.key.Key", carbon).getMethod("value").invoke(key));
                 if (!value.equalsIgnoreCase(channelName) && !value.equalsIgnoreCase("global:" + channelName)) continue;
-                for (Method m : registry.getClass().getMethods()) {
+                for (Method m : registryType.getMethods()) {
                     if (m.getName().equals("channel") && m.getParameterCount() == 1
                             && m.getParameterTypes()[0].isInstance(key)) {
                         channel = m.invoke(registry, key);
@@ -82,8 +87,8 @@ public final class CarbonChatBridge {
             }
             if (channel == null) { result.accept("Carbon channel '" + channelName + "' was not found."); return; }
 
-            Object manager = api.getClass().getMethod("userManager").invoke(api);
-            Method userMethod = findMethod(manager.getClass(), "user", UUID.class);
+            Object manager = carbonChatType.getMethod("userManager").invoke(api);
+            Method userMethod = findMethod(carbonClass("net.draycia.carbon.api.users.UserManager", carbon), "user", UUID.class);
             if (userMethod == null) { result.accept("This Carbon version does not expose UserManager.user(UUID)."); return; }
             Object futureObject = userMethod.invoke(manager, target.getUniqueId());
             if (!(futureObject instanceof CompletableFuture<?> future)) {
@@ -95,14 +100,7 @@ public final class CarbonChatBridge {
                     result.accept("Carbon could not load the player's profile; channel unchanged."); return;
                 }
                 try {
-                    Method setter = findOneArgMethod(carbonPlayer.getClass(), "selectedChannel", finalChannel.getClass());
-                    if (setter == null) {
-                        for (Method m : carbonPlayer.getClass().getMethods()) {
-                            if (m.getName().equals("selectedChannel") && m.getParameterCount() == 1
-                                    && m.getParameterTypes()[0].isInstance(finalChannel)) { setter = m; break; }
-                        }
-                    }
-                    if (setter == null) { result.accept("This Carbon version does not expose the expected channel setter."); return; }
+                    Method setter = carbonClass("net.draycia.carbon.api.users.CarbonPlayer", carbon).getMethod("selectedChannel", carbonClass("net.draycia.carbon.api.channels.ChatChannel", carbon));
                     setter.invoke(carbonPlayer, finalChannel);
                     result.accept("Switched " + target.getName() + "'s Carbon channel to '" + channelName + "'.");
                 } catch (Throwable t) {
