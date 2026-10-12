@@ -55,7 +55,7 @@ public class Shop {
 
     public static String safePresetName(String name) {
         String cleaned = name == null ? "" : name.trim();
-        if (!cleaned.matches("[A-Za-z0-9_-]{1,48}")) throw new IllegalArgumentException("Preset names may only contain letters, numbers, underscores, and hyphens.");
+        if (!cleaned.matches("[A-Za-z0-9 _.-]{1,64}") || cleaned.equals(".") || cleaned.equals("..") || cleaned.startsWith(".")) throw new IllegalArgumentException("Preset names may contain letters, numbers, spaces, dots, underscores, and hyphens, but cannot start with a dot.");
         return cleaned;
     }
 
@@ -154,7 +154,7 @@ public class Shop {
             default -> 10;
         };
         if (n.contains("NETHERITE")) {
-            base = n.contains("INGOT") ? 6500 : n.contains("SCRAP") ? 2800 :
+            base = n.contains("BLOCK") ? 58500 : n.contains("INGOT") ? 6500 : n.contains("SCRAP") ? 2800 : n.contains("SMITHING_TEMPLATE") ? 4500 :
                     (n.contains("SWORD") || n.contains("PICKAXE") || n.contains("AXE") || n.contains("SHOVEL")
                     || n.contains("HOE") || n.contains("HELMET") || n.contains("CHESTPLATE") || n.contains("LEGGINGS")
                     || n.contains("BOOTS")) ? 8500 : 1200;
