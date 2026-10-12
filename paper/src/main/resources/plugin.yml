@@ -82,6 +82,9 @@ commands:
   setup:
     description: Configure optional game-mode support.
     usage: "/setup lifesteal"
+  lobby:
+    description: Switch to the Lobby Carbon chat channel without teleporting.
+    usage: "/lobby"
   rank:
     description: View or set ranks.
     usage: "/rank [list|info [player]|set <player> <rank>]"
