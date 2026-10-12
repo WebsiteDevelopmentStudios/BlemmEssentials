@@ -97,12 +97,9 @@ public class Commands implements CommandExecutor, TabCompleter {
             pl.msg(sender, "&7Use /shop preset <name> to switch presets.");
             return;
         }
-        if (args.length > 2) {
-            pl.msg(sender, "&cUsage: /shop preset <name>");
-            return;
-        }
-        if (!pl.activateShopPreset(args[1])) {
-            pl.msg(sender, "&cCould not load that preset. Check its name and make sure prices/" + args[1] + ".txt exists.");
+        String presetName = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        if (!pl.activateShopPreset(presetName)) {
+            pl.msg(sender, "&cCould not load that preset. Check its name and make sure prices/" + presetName + ".txt exists.");
             return;
         }
         pl.msg(sender, "&aShop preset changed to &f" + pl.activeShopPreset() + "&a.");
