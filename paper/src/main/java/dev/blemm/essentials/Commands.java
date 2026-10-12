@@ -59,9 +59,16 @@ public class Commands implements CommandExecutor, TabCompleter {
             case "sell" -> sell(s, a);
             case "rank" -> rank(s, a);
             case "setup" -> setup(s, a);
+            case "lobby" -> lobby(s);
             default -> { return false; }
         }
         return true;
+    }
+
+    private void lobby(CommandSender sender) {
+        if (playerOnly(sender)) return;
+        pl.selectCarbonLobby((Player) sender);
+        pl.msg(sender, "&aLobby chat channel selected.");
     }
 
     private void setup(CommandSender sender, String[] args) {
