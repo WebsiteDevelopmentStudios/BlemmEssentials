@@ -109,7 +109,8 @@ public final class CarbonChatBridge {
                     Object permissionResult = carbonClass("net.draycia.carbon.api.channels.ChannelPermissions", carbon)
                             .getMethod("joinPermitted", carbonClass("net.draycia.carbon.api.users.CarbonPlayer", carbon))
                             .invoke(permissions, carbonPlayer);
-                    boolean permitted = (boolean) permissionResult.getClass().getMethod("permitted").invoke(permissionResult);
+                    boolean permitted = (boolean) carbonClass("net.draycia.carbon.api.channels.ChannelPermissionResult", carbon)
+                            .getMethod("permitted").invoke(permissionResult);
                     if (!permitted) {
                         result.accept("Carbon denied access to channel '" + channelName + "' for that player; channel unchanged.");
                         return;
