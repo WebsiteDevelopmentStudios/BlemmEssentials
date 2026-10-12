@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import dev.blemm.essentials.locations.LocationCommands;
@@ -38,6 +39,9 @@ public final class BlemmEssentialsNeoForge {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem event) -> {
             if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player)) return;
             if (!dev.blemm.essentials.menu.CompassMenu.isMenuCompass(event.getItemStack())) return;
+            // Consume the compass interaction so no underlying item behavior can move the player.
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
             dev.blemm.essentials.menu.CompassMenu.open(player);
         });
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> { ECONOMY.load(event.getServer()); LocationCommands.load(event.getServer()); AuctionStore.load(event.getServer()); RankStore.load(event.getServer()); FriendStore.load(event.getServer()); dev.blemm.essentials.shop.ShopPrices.load(event.getServer()); dev.blemm.essentials.integrations.DiscordWebhook.load(event.getServer()); dev.blemm.essentials.commands.CommandPolicy.load(event.getServer()); });
