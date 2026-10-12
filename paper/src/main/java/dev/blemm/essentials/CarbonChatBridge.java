@@ -48,6 +48,10 @@ public final class CarbonChatBridge {
             Object manager = api.getClass().getMethod("userManager").invoke(api);
             Method user = findMethod(manager.getClass(), "user", UUID.class);
             if (user == null) return new Check(true, false, version, "Carbon API found, but UserManager.user(UUID) is unavailable.");
+            Class<?> carbonPlayer = carbonClass("net.draycia.carbon.api.users.CarbonPlayer", carbon);
+            boolean setter = false;
+            for (Method method : carbonPlayer.getMethods()) if (method.getName().equals("selectedChannel") && method.getParameterCount() == 1) setter = true;
+            if (!setter) return new Check(true, false, version, "CarbonPlayer.selectedChannel(ChatChannel) is unavailable in this API.");
             if (!found) return new Check(true, false, version, "Carbon API loaded, but channel '" + channelName + "' is not registered. Registered keys: " + keys);
             return new Check(true, true, version, "Carbon API and channel '" + channelName + "' detected.");
         } catch (Throwable t) {
@@ -63,27 +67,18 @@ public final class CarbonChatBridge {
                     .getMethod("carbonChat").invoke(null);
             Object registry = api.getClass().getMethod("channelRegistry").invoke(api);
             Object channel = null;
-            for (Object key : (Set<?>) registry.getClass().getMethod("keys").invoke(registry)) {
+            Set<?> keys = (Set<?>) registry.getClass().getMethod("keys").invoke(registry);
+            for (Object key : keys) {
                 String value = String.valueOf(key.getClass().getMethod("value").invoke(key));
-                if (value.equalsIgnoreCase(channelName) || value.equalsIgnoreCase("global:" + channelName)) {
-                    channel = registry.getClass().getMethod("channel", key.getClass().getInterfaces().length > 0
-                            ? key.getClass().getInterfaces()[0] : key.getClass()).invoke(registry, key);
-                    if (channel != null) break;
-                }
-            }
-            // Fall back to the registry's public channel(Key) method, using the actual key type.
-            if (channel == null) {
+                if (!value.equalsIgnoreCase(channelName) && !value.equalsIgnoreCase("global:" + channelName)) continue;
                 for (Method m : registry.getClass().getMethods()) {
-                    if (m.getName().equals("channel") && m.getParameterCount() == 1) {
-                        for (Object key : (Set<?>) registry.getClass().getMethod("keys").invoke(registry)) {
-                            String value = String.valueOf(key.getClass().getMethod("value").invoke(key));
-                            if (value.equalsIgnoreCase(channelName) || value.equalsIgnoreCase("global:" + channelName)) {
-                                channel = m.invoke(registry, key); break;
-                            }
-                        }
+                    if (m.getName().equals("channel") && m.getParameterCount() == 1
+                            && m.getParameterTypes()[0].isInstance(key)) {
+                        channel = m.invoke(registry, key);
+                        break;
                     }
-                    if (channel != null) break;
                 }
+                if (channel != null) break;
             }
             if (channel == null) { result.accept("Carbon channel '" + channelName + "' was not found."); return; }
 
