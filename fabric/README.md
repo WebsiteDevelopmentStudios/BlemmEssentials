@@ -8,13 +8,13 @@ Native Fabric server mod targeting Minecraft 26.3 and Java 25.
 - Shop and selling: `/shop <item> <amount>`, `/sell` (sells the held stack).
 - Auction house: `/ah list`, `/ah sell <price>`, `/ah buy <id>`, `/ah cancel <id>`.
 - Homes: `/sethome [name]`, `/home [name]`, `/delhome <name>` (three homes by default).
-- Warps/lobby: `/setwarp <name>`, `/warp <name>`, `/delwarp <name>`, `/setlobby`, `/lobby`.
+- Warps: `/setwarp <name>`, `/warp <name>`, `/delwarp <name>`.
 - Teleporting: `/rtp`, `/tpa <player>`, `/tpahere <player>`, `/tpaccept`, `/tpdeny`.
 - Friends: `/friend add <player>`, `/friend remove <player>`, `/friend list`, `/homefriends`, `/homevisit <player> <home>`.
 - Ranks: `/rank`, `/rank <player>`, operator-only `/rank set <player> <member|vip|mvp|admin>`.
 - Help: `/help-`.
 
-Operator-only commands require operator permission. Home, warp, lobby, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
+Operator-only commands require operator permission. Home, warp, economy, auction, rank, and friend settings are persisted under `blemmessentials/` in the server directory.
 
 The Fabric port uses native vanilla GUIs and has optional integrations for MiniPlaceholders and Geyser/Floodgate skin lookups. It is not a Bukkit plugin and cannot load DiscordSRV, PlaceholderAPI, or Multiverse-Core directly.
 
@@ -40,11 +40,6 @@ After first start, edit `blemmessentials/disabled-commands.properties`. Use dime
 
 
 Auction listings now serialize the complete item stack through Minecraft's registry-aware item codec, preserving custom names, lore, enchantments, and other item components across server restarts. Existing listings from older versions remain readable and fall back to plain item stacks.
-
-
-### Menu compass
-
-A BlemmEssentials Compass is added to a player's inventory when they join if they do not already have one. Right-clicking it opens a vanilla utility menu for balance, shop, auctions, homes, warps, friends, and lobby. The compass never teleports the player by itself. The `compass` entry in `disabled-commands.properties` can disable it for a dimension.
 
 
 ## Optional integrations
