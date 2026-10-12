@@ -54,12 +54,6 @@ commands:
   delwarp:
     description: Delete a warp.
     usage: "/delwarp <name>"
-  lobby:
-    description: Go to the lobby.
-    usage: "/lobby"
-  setlobby:
-    description: Set the lobby.
-    usage: "/setlobby"
   help-:
     description: Show BlemmEssentials commands.
     usage: "/help-"
