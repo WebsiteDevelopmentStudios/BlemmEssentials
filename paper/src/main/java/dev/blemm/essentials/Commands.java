@@ -78,21 +78,6 @@ public class Commands implements CommandExecutor, TabCompleter {
         pl.msg(sender, "&7No existing player data was changed.");
     }
 
-    // ------------------------------------------------------------ setup
-    private void setup(CommandSender sender, String[] args) {
-        if (!pl.isAdmin(sender)) { pl.msg(sender, "&cOnly an owner/operator can run setup."); return; }
-        if (args.length != 1 || !args[0].equalsIgnoreCase("lifesteal")) {
-            pl.msg(sender, "&cUsage: /setup lifesteal"); return;
-        }
-        World world = pl.lifestealWorld();
-        if (world == null) {
-            pl.msg(sender, "&cNo world named Lifesteal is loaded. Create/load that world, then run /setup lifesteal again."); return;
-        }
-        pl.msg(sender, "&eLifesteal world detected: &f" + world.getName());
-        pl.msg(sender, "&cSetup is not complete: this build does not yet isolate Lifesteal balances, auctions, or shop data.");
-        pl.msg(sender, "&7No existing player data was changed.");
-    }
-
     // ------------------------------------------------------------ economy
     private void money(CommandSender s, String[] a) {
         if (a.length == 0) {
