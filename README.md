@@ -7,9 +7,9 @@ BlemmEssentials targets Minecraft 26.3 and Java 25. Paper/Purpur remains the ref
 | Platform | Project | Current scope |
 | --- | --- | --- |
 | Paper/Purpur | `paper/` | Reference implementation: economy, teleports, homes, warps, ranks, shop, selling, auction house, integrations, and GUI flows |
-| Fabric | `fabric/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
-| Forge | `forge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
-| NeoForge | `neoforge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, lobby, random teleport, teleport requests, friends and friend-only home visits |
+| Fabric | `fabric/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, random teleport, teleport requests, friends and friend-only home visits |
+| Forge | `forge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, random teleport, teleport requests, friends and friend-only home visits |
+| NeoForge | `neoforge/` | Economy, GUI and command-based shop/selling, auctions, ranks, homes, warps, random teleport, teleport requests, friends and friend-only home visits |
 
 The mod ports are a functional first pass, **not exact feature parity**. Paper supports DiscordSRV, PlaceholderAPI, Geyser/Floodgate, and Multiverse directly. Fabric now optionally integrates with MiniPlaceholders (`<blemm_balance>`, `<blemm_rank>`, `<blemm_rank_prefix>`, `<blemm_world>`, `<blemm_is_bedrock>`, and `<blemm_discord_avatar>`) and can look up Floodgate/Geyser Bedrock skin textures. Fabric/Forge/NeoForge cannot load Bukkit plugins such as DiscordSRV, PlaceholderAPI, or Multiverse-Core; the mod ports use Discord webhooks and native cross-dimension warps instead. Forge and NeoForge do not yet have a compatible third-party placeholder API bridge. The mod ports now support configurable category defaults and per-item buy/sell prices, but they do not yet duplicate every Paper shop rule. The loader shop has a native vanilla chest GUI and command access; the auction house is command-based, rank prefixes use vanilla scoreboard teams (which may conflict with another mod that manages the same teams), and auction listings now persist the complete item stack, including custom components, names, lore, and enchantments.
 
@@ -25,11 +25,6 @@ The mod ports are a functional first pass, **not exact feature parity**. Paper s
 - `/shopprices` — show price configuration keys and supported categories.
 
 Mod-loader shop prices are editable in `blemmessentials/shop-prices.properties` after the first server start. Configure category defaults with `default.<category>.buy` and `default.<category>.sell`, or override an item with `item.<namespace:id>.buy` and `item.<namespace:id>.sell`. A sell price of `0` disables selling that item.
-
-### Menu compass
-
-A BlemmEssentials Compass is added to a player's inventory when they join if they do not already have one. Right-clicking it opens a vanilla utility menu for balance, shop, auctions, homes, warps, friends, and lobby. The compass never teleports the player by itself. The `compass` entry in `disabled-commands.properties` can disable it for a dimension.
-
 
 ### Per-dimension command disabling on mod loaders
 
@@ -49,7 +44,6 @@ The mod ports can announce new auctions without DiscordSRV by using a Discord we
 ### Homes, warps, and teleporting
 - `/sethome [name]`, `/home [name]`, `/delhome <name>` — manage up to three homes.
 - `/setwarp <name>`, `/warp <name>`, `/delwarp <name>` — manage operator warps.
-- `/setlobby`, `/lobby` — set and visit the lobby.
 - `/rtp` — attempt a safe random teleport within 100–5,000 blocks of your current position.
 - `/tpa <player>`, `/tpahere <player>`, `/tpaccept`, `/tpdeny` — teleport requests expire after 60 seconds.
 
@@ -72,7 +66,7 @@ Optional Paper integrations include Geyser + Floodgate, DiscordSRV, Multiverse-C
 3. Java players use their normal avatar; Bedrock players use the skin uploaded by Geyser, looked up from the GeyserMC skin API.
 
 ### Per-world disabling
-Paper supports `disabled-commands` in `config.yml`, e.g. `world_the_end: [rtp, home, compass]`.
+Paper supports `disabled-commands` in `config.yml`, e.g. `world_the_end: [rtp, home]`.
 
 ## Build
 

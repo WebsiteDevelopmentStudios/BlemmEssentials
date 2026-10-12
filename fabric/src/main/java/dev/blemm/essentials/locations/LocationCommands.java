@@ -52,7 +52,7 @@ public final class LocationCommands {
         try {
             Files.createDirectories(destination.getParent());
             try (OutputStream output = Files.newOutputStream(destination)) {
-                DATA.store(output, "BlemmEssentials homes, warps, and lobby");
+                DATA.store(output, "BlemmEssentials homes and warps");
             }
             dataFile = destination;
         } catch (IOException exception) {
@@ -119,22 +119,6 @@ public final class LocationCommands {
                 context.getSource().sendSuccess(() -> Component.literal("Warp deleted."), true);
                 return 1;
             })));
-
-        dispatcher.register(Commands.literal("setlobby").requires(source -> LocationCommands.isOperator(source) && !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "setlobby")).executes(context -> {
-            ServerPlayer player = context.getSource().getPlayerOrException();
-            synchronized (LocationCommands.class) {
-                DATA.setProperty("lobby", encode(player));
-                save(context.getSource().getServer());
-            }
-            context.getSource().sendSuccess(() -> Component.literal("Lobby location saved."), true);
-            return 1;
-        }));
-
-        dispatcher.register(Commands.literal("lobby").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "lobby")).executes(context -> {
-            String encoded;
-            synchronized (LocationCommands.class) { encoded = DATA.getProperty("lobby"); }
-            return teleport(context.getSource(), encoded, "Lobby location has not been set.");
-        }));
 
         dispatcher.register(Commands.literal("friend").requires(source -> !dev.blemm.essentials.commands.CommandPolicy.disabled(source, "friend"))
             .then(Commands.literal("add").then(Commands.argument("player", EntityArgument.player()).executes(context -> {

@@ -3,18 +3,16 @@ max-homes: 3            # fallback when a rank has no max-homes
 tpa-timeout-seconds: 60
 auction-expiration-hours: 168
 admin-tag: Admin
-give-compass-on-first-join: true
 
 rtp:
   minimum-radius: 100
   maximum-radius: 5000
   attempts: 32
 
-# Command names (and "compass") that are DISABLED per world. "*" applies to every world.
+# Command names that are DISABLED per world. "*" applies to every world.
 # Players with blemmessentials.bypass.worlds or the admin tag ignore this.
 disabled-commands:
   "*": []
-  # world_the_end: [rtp, sethome, home, compass]
 
 warps:
   # A warp can only be used while standing in the world where /setwarp was run.
@@ -22,9 +20,6 @@ warps:
   # Try "mv load <world>" when a warp's world is not loaded and Multiverse-Core is installed.
   multiverse-load-worlds: true
 
-lobby:
-  # /lobby works from any world (it ignores require-same-world).
-  allow-from-any-world: true
 
 ranks:
   member:

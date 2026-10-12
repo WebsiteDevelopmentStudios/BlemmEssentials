@@ -49,8 +49,6 @@ public class Commands implements CommandExecutor, TabCompleter {
             case "setwarp" -> setWarp(s, a);
             case "warp" -> warp(s, a);
             case "delwarp" -> delWarp(s, a);
-            case "lobby" -> lobby(s);
-            case "setlobby" -> setLobby(s);
             case "help-" -> help(s);
             case "admin" -> admin(s, a);
             case "friend" -> friend(s, a);
@@ -202,7 +200,7 @@ public class Commands implements CommandExecutor, TabCompleter {
         pl.msg(p, "Home deleted.");
     }
 
-    // ------------------------------------------------------------ warps / lobby
+    // ------------------------------------------------------------ warps
     private boolean adminOnly(CommandSender s) {
         if (pl.isAdmin(s)) return false;
         pl.msg(s, "&cAdmins only."); return true;
@@ -213,7 +211,6 @@ public class Commands implements CommandExecutor, TabCompleter {
         Player p = (Player) s;
         if (a.length < 1) { pl.msg(p, "&cUsage: /setwarp <name>"); return; }
         String name = a[0].toLowerCase();
-        if (name.equals("lobby")) { pl.msg(p, "&cUse /setlobby for the lobby."); return; }
         // The warp remembers the world this command was run in.
         Spot.of(p.getLocation()).write(pl.warps().createSection("warps." + name));
         pl.markDirty();
@@ -252,47 +249,20 @@ public class Commands implements CommandExecutor, TabCompleter {
         pl.msg(s, "Warp deleted.");
     }
 
-    private void setLobby(CommandSender s) {
-        if (playerOnly(s) || adminOnly(s)) return;
-        Player p = (Player) s;
-        Spot.of(p.getLocation()).write(pl.warps().createSection("lobby"));
-        pl.markDirty();
-        pl.msg(p, "Lobby set in world &f" + p.getWorld().getName() + "&r.");
-    }
-
-    private void lobby(CommandSender s) {
-        if (playerOnly(s)) return;
-        Player p = (Player) s;
-        Spot sp = pl.spotOf("lobby");
-        if (sp == null) { pl.msg(p, "&cThe lobby has not been set. An admin must run /setlobby."); return; }
-        if (!pl.getConfig().getBoolean("lobby.allow-from-any-world", true) && !sp.world().equals(p.getWorld().getName())) {
-            pl.msg(p, "&cThe lobby can only be used in world &f" + sp.world() + "&c."); return;
-        }
-        pl.teleport(p, sp);
-    }
-
     // ------------------------------------------------------------ help / admin / ranks
     private void help(CommandSender s) {
-        pl.msg(s, "&6Commands: &f/money /pay /tpa /tpahere /tpaccept /tpdeny /rtp /sethome /home /delhome /warp /lobby "
+        pl.msg(s, "&6Commands: &f/money /pay /tpa /tpahere /tpaccept /tpdeny /rtp /sethome /home /delhome /warp "
                 + "/friend /homefriends /homevisit /shop /sell /ah /rank");
-        pl.msg(s, "Right-click the BlemmEssentials compass to open the menu.");
     }
 
     private void admin(CommandSender s, String[] a) {
         if (adminOnly(s)) return;
         if (a.length == 0 || a[0].equalsIgnoreCase("help")) {
-            pl.msg(s, "&6/admin balance <set|add> <player> <amount> | givecompass <player> | tag <add|remove> <player> | reload");
+            pl.msg(s, "&6/admin balance <set|add> <player> <amount> | tag <add|remove> <player> | reload");
             return;
         }
         switch (a[0].toLowerCase()) {
             case "reload" -> { pl.reload(); pl.msg(s, "Reloaded."); }
-            case "givecompass" -> {
-                Player t = a.length > 1 ? Bukkit.getPlayerExact(a[1]) : null;
-                if (t == null) { pl.msg(s, "&cPlayer not online."); return; }
-                if (pl.hasMenuCompass(t)) { pl.msg(s, t.getName() + " already has a compass."); return; }
-                t.getInventory().addItem(pl.makeCompass());
-                pl.msg(s, "Gave the compass to " + t.getName());
-            }
             case "tag" -> {
                 Player t = a.length > 2 ? Bukkit.getPlayerExact(a[2]) : null;
                 if (t == null) { pl.msg(s, "&cUsage: /admin tag <add|remove> <online-player>"); return; }
@@ -519,7 +489,7 @@ public class Commands implements CommandExecutor, TabCompleter {
                 case "warp" -> { out.add("list"); ConfigurationSection w = pl.warps().getConfigurationSection("warps"); if (w != null) out.addAll(w.getKeys(false)); }
                 case "delwarp" -> { ConfigurationSection w = pl.warps().getConfigurationSection("warps"); if (w != null) out.addAll(w.getKeys(false)); }
                 case "friend" -> out.addAll(List.of("add", "remove", "list"));
-                case "admin" -> out.addAll(List.of("help", "balance", "givecompass", "tag", "reload"));
+                case "admin" -> out.addAll(List.of("help", "balance", "tag", "reload"));
                 case "ah" -> out.addAll(List.of("sell", "buy", "cancel", "claim"));
                 case "rank" -> out.addAll(List.of("list", "info", "set"));
                 case "sell" -> out.add("all");
