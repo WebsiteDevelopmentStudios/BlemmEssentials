@@ -75,7 +75,7 @@ commands:
     usage: "/ah [sell <price> [amount]|buy <id>|cancel <id>|claim]"
   shop:
     description: Open the shop.
-    usage: "/shop"
+    usage: "/shop [preset [name]]"
   sell:
     description: Sell items.
     usage: "/sell [all]"
