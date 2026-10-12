@@ -46,7 +46,11 @@ public final class CompassMenu {
         player.getInventory().add(compass);
     }
 
-    public static boolean isAllowedWorld(ServerPlayer player) { String id = player.level().dimension().identifier().toString(); return id.equalsIgnoreCase("minecraft:overworld") || id.equalsIgnoreCase("minecraft:survival"); }
+    public static boolean isAllowedWorld(ServerPlayer player) {
+        // Mod loaders use dimensions, not Bukkit/Multiverse world names. Only the normal Overworld is allowed.
+        // Nether, End, and custom dimensions (including a modded Lifesteal dimension) are rejected.
+        return player.level().dimension().identifier().toString().equals("minecraft:overworld");
+    }
 
     public static void open(ServerPlayer player) {
         if (!isAllowedWorld(player) || dev.blemm.essentials.commands.CommandPolicy.disabled(player.createCommandSourceStack(), "compass")) {
@@ -77,6 +81,11 @@ public final class CompassMenu {
         @Override
         public void clicked(int slotId, int button, ContainerInput input, Player player) {
             if (!(player instanceof ServerPlayer serverPlayer) || slotId < 0 || slotId >= 27) return;
+            if (!isAllowedWorld(serverPlayer)) {
+                serverPlayer.closeContainer();
+                serverPlayer.sendSystemMessage(Component.literal("The BlemmEssentials compass is only available in the Overworld."));
+                return;
+            }
             if (slotId == 22) {
                 serverPlayer.closeContainer();
                 return;
