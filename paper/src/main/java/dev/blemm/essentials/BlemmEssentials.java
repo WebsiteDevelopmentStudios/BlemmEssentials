@@ -33,7 +33,7 @@ import java.util.*;
 public class BlemmEssentials extends JavaPlugin implements Listener {
     private static final List<String> COMMANDS = List.of("money", "pay", "tpa", "tpahere", "tpaccept", "tpdeny", "rtp",
             "sethome", "home", "delhome", "setwarp", "warp", "delwarp", "help-", "admin",
-            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank", "setup", "lobby");
+            "friend", "homefriends", "homevisit", "ah", "shop", "sell", "rank", "setup", "blemmchat");
 
     public static final String PREFIX = ChatColor.GOLD + "[Blemm] " + ChatColor.RESET;
 
@@ -43,6 +43,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
     private NamespacedKey compassKey;
     private Shop shop;
     private Integrations integrations;
+    private CarbonChatBridge carbonChat;
     private Commands commands;
     private File pricesFolder;
     private String activeShopPreset = "shop";
@@ -57,6 +58,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         data = YamlConfiguration.loadConfiguration(dataFile);
         warps = YamlConfiguration.loadConfiguration(warpFile);
         integrations = new Integrations(this);
+        carbonChat = new CarbonChatBridge(this);
         pricesFolder = new File(getDataFolder(), "prices");
         try {
             Shop.ensurePresetFiles(pricesFolder);
@@ -117,6 +119,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         }
     }
     public Integrations integrations() { return integrations; }
+    public CarbonChatBridge carbonChat() { return carbonChat; }
     public void markDirty() { dirty = true; }
 
     private void flush() {
@@ -281,7 +284,7 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         if (raw.contains(":")) raw = raw.substring(raw.indexOf(':') + 1);
         PluginCommand pc = Bukkit.getPluginCommand(raw);
         if (pc == null || pc.getPlugin() != this) return;
-        if (!isSurvivalWorld(e.getPlayer()) && !raw.equalsIgnoreCase("setup")) {
+        if (!isSurvivalWorld(e.getPlayer()) && !raw.equalsIgnoreCase("setup") && !raw.equalsIgnoreCase("blemmchat")) {
             e.setCancelled(true);
             msg(e.getPlayer(), "&cBlemmEssentials commands are only available in Survival.");
             return;
