@@ -100,11 +100,26 @@ public final class CarbonChatBridge {
                     result.accept("Carbon could not load the player's profile; channel unchanged."); return;
                 }
                 try {
-                    Method setter = carbonClass("net.draycia.carbon.api.users.CarbonPlayer", carbon).getMethod("selectedChannel", carbonClass("net.draycia.carbon.api.channels.ChatChannel", carbon));
+                    if (!target.isOnline()) {
+                        result.accept("The target player disconnected before the channel could be changed.");
+                        return;
+                    }
+                    Object permissions = carbonClass("net.draycia.carbon.api.channels.ChatChannel", carbon)
+                            .getMethod("permissions").invoke(finalChannel);
+                    Object permissionResult = carbonClass("net.draycia.carbon.api.channels.ChannelPermissions", carbon)
+                            .getMethod("joinPermitted", carbonClass("net.draycia.carbon.api.users.CarbonPlayer", carbon))
+                            .invoke(permissions, carbonPlayer);
+                    boolean permitted = (boolean) permissionResult.getClass().getMethod("permitted").invoke(permissionResult);
+                    if (!permitted) {
+                        result.accept("Carbon denied access to channel '" + channelName + "' for that player; channel unchanged.");
+                        return;
+                    }
+                    Method setter = carbonClass("net.draycia.carbon.api.users.CarbonPlayer", carbon)
+                            .getMethod("selectedChannel", carbonClass("net.draycia.carbon.api.channels.ChatChannel", carbon));
                     setter.invoke(carbonPlayer, finalChannel);
                     result.accept("Switched " + target.getName() + "'s Carbon channel to '" + channelName + "'.");
                 } catch (Throwable t) {
-                    result.accept("Carbon channel switch failed safely: " + rootMessage(t)); 
+                    result.accept("Carbon channel switch failed safely: " + rootMessage(t));
                 }
             }));
         } catch (Throwable t) {
