@@ -355,6 +355,21 @@ public class BlemmEssentials extends JavaPlugin implements Listener {
         if (e.getClickedInventory() == null || e.getClickedInventory() != e.getView().getTopInventory()) return;
         int slot = e.getSlot();
         switch (menu.type) {
+            case COMPASS -> {
+                String command = switch (slot) {
+                    case 10 -> "money";
+                    case 11 -> "shop";
+                    case 12 -> "ah";
+                    case 13 -> "home";
+                    case 14 -> "warp";
+                    case 15 -> "friend list";
+                    default -> null;
+                };
+                if (command != null) {
+                    p.closeInventory();
+                    Bukkit.dispatchCommand(p, command);
+                }
+            }
             case SHOP_CATEGORIES -> {
                 ItemStack it = e.getCurrentItem();
                 if (it == null || !it.hasItemMeta()) return;
