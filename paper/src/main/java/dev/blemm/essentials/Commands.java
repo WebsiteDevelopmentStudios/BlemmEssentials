@@ -95,7 +95,7 @@ public class Commands implements CommandExecutor, TabCompleter {
     }
 
     private void blemmchat(CommandSender sender, String[] args) {
-        if (!pl.isAdmin(sender)) { pl.msg(sender, "&cOnly an owner/operator can use this command."); return; }
+        if (!sender.hasPermission("blemmessentials.chat.set")) { pl.msg(sender, "&cYou do not have permission to change Carbon channels."); return; }
         if (args.length != 3 || !args[0].equalsIgnoreCase("set")) {
             pl.msg(sender, "&cUsage: /blemmchat set <online-player> <channel>"); return;
         }
