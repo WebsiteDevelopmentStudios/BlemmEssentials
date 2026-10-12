@@ -78,6 +78,14 @@ public class Shop {
         } catch (Exception ignored) { return "shop"; }
     }
 
+    public static List<String> listPresetNames(File folder) {
+        File[] files = folder.listFiles((dir, filename) -> filename.toLowerCase(Locale.ROOT).endsWith(".txt")
+                && !filename.equalsIgnoreCase("active.txt"));
+        if (files == null) return List.of();
+        return Arrays.stream(files).map(f -> f.getName().substring(0, f.getName().length() - 4))
+                .sorted(String.CASE_INSENSITIVE_ORDER).toList();
+    }
+
     public static boolean presetExists(File folder, String name) {
         try { return new File(folder, safePresetName(name) + ".txt").isFile(); }
         catch (IllegalArgumentException ex) { return false; }
